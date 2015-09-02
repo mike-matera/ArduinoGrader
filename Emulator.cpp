@@ -73,7 +73,7 @@ void analogWrite(uint8_t, int) {
 extern "C" {
 static void __test_init(void){}
 static void __test_setup_done(void){}
-static bool __test_loop_done(void){printf("fuck\n"); return true;}
+static bool __test_loop_done(void){return true;}
 static void __test_exit(void){}
 }
 
