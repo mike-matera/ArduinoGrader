@@ -1,7 +1,11 @@
 #include <assert.h>
+#include <execinfo.h>
 #include <time.h>
+#include <stdio.h>
 
+#include <cstdarg>
 #include <functional>
+#include <string>
 #include <vector>
 
 #include "Arduino.h"
@@ -11,6 +15,15 @@ Emulator Arduino;
 
 // helpers 
 static struct timespec zerotime = { .tv_sec = 0, .tv_nsec = 0 } ; 
+
+static void __check(const char *fmt...) {
+  va_list args; 
+  va_start(args, fmt);
+  char buffer[256]; 
+  vsnprintf(buffer, 256, fmt, args);
+  test_check(buffer);
+  va_end(args);
+}
 
 /* 
  * micros() on Arduino is microseconds of operation. No good code
@@ -26,7 +39,9 @@ unsigned long micros() {
   clock_gettime(CLOCK_MONOTONIC, &time);
   time.tv_sec = time.tv_sec - zerotime.tv_sec; 
   time.tv_nsec = time.tv_nsec - zerotime.tv_nsec;
-  return (time.tv_sec * 1000000 + time.tv_nsec / 1000);
+  int t = (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
+  __check("micros() == %d", t);
+  return t;
 }
 
 unsigned long millis() {
@@ -46,57 +61,74 @@ void delay(unsigned long time) {
 }
 
 void pinMode(uint8_t pin, uint8_t mode) {
+  __check("pinMode(%d, %x)", pin, mode);
   assert(pin < NUMPINS);
   assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);
   Arduino.pinMode(pin, mode);
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
+  __check("digitalWrite(%d, %x)", pin, value);
   assert(pin < NUMPINS);
   assert(value == HIGH || value == LOW);
   Arduino.digitalWrite(pin, value);
 }
 
-int digitalRead(uint8_t) {
+int digitalRead(uint8_t pin) {
+  __check("digitalRead(%d)", pin);
 }
 
-int analogRead(uint8_t) {
+int analogRead(uint8_t pin) {
+  __check("analogRead(%d)", pin);
 }
 
 void analogReference(uint8_t mode) {
+  __check("analogReference(%x)", mode);
   // FIXME: record this value...
 }
 
-void analogWrite(uint8_t, int) {
+void analogWrite(uint8_t pin, int val) {
+  __check("analogWrite(%d, %d)", pin, val);
 }
 
 extern "C" {
-static void __test_init(void){}
-static void __test_setup_done(void){}
-static bool __test_loop_done(void){return true;}
-static void __test_exit(void){}
+  static void __test_setup(void){}
+  static bool __test_loop(void){return true;}
+  static void __test_exit(void){}
+  static void __test_check(const std::string &s){}
 }
 
-void test_init(void) __attribute__((weak,  alias("__test_init"))) ;
-void test_setup_done(void) __attribute__((weak, alias("__test_setup_done"))) ;
-bool test_loop_done(void) __attribute__((weak, alias("__test_loop_done"))) ;
+void test_setup(void) __attribute__((weak, alias("__test_setup"))) ;
+bool test_loop(void) __attribute__((weak, alias("__test_loop"))) ;
 void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
+void test_check(const std::string &) __attribute__((weak, alias("__test_check"))) ;
+
+#define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}
+
 
 int main(int argc, char **argv) {
 
-  test_init(); 
+  int loopcount = 1; 
 
-  setup();
-  test_setup_done();
-  
-  do {
-    loop();
-  } while (test_loop_done());
+  try {
+    test_setup(); 
+    __check("setup()");
+    setup();
+    
+    while (test_loop()) {
+      __check("loop() #%d", loopcount);
+      loop();
+      loopcount++;
+    }
 
-  test_exit();
-}
+    test_exit();
 
-std::ostream & operator<<(std::ostream &os, const DigitalPin & me) {
-  os << "mode: " << me.mode << " value: " << me.value; 
-  return os;
+  } catch (std::string s) {
+    std::cout << "Emulator died during " << s << std::endl;
+    STACKTRACE();
+
+  } catch (...) {
+    std::cout << "Emulator died because of an unknown exception." << std::endl;
+    STACKTRACE();
+  }
 }

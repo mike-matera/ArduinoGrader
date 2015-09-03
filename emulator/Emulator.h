@@ -6,39 +6,9 @@
 #include <vector>
 
 #include "Arduino.h"
+#include "PinState.h"
 
 #define NUMPINS 20 
-
-class DigitalPin {
-public:
-  enum PinMode {
-    output, input, pullup, pwm, tone
-  };
-
-  DigitalPin() {
-    mode = PinMode::input; 
-    value = 0; 
-  }
-
-  bool isEnabled() {
-    return (mode == output);
-  }
-
-  bool isHigh() {
-    return (mode == output && value == HIGH);
-  }
-
-  bool isLow() {
-    return (mode == output && value == LOW);
-  }
-
-  PinMode mode; 
-  int value; 
-};
-
-std::ostream & operator<<(std::ostream &os, const DigitalPin & me);
-
-typedef std::function<void (int, DigitalPin)> pinwatcher_t ; 
 
 class Emulator {
   
@@ -46,7 +16,7 @@ public:
 
   Emulator() {
     for (int i=0; i<NUMPINS; i++) {
-      pins.push_back(DigitalPin());
+      pins.push_back(PinState());
     }
   }
 
@@ -54,23 +24,25 @@ public:
   }
 
   void pinMode(int pin, uint8_t mode) {    
-    DigitalPin::PinMode m; 
+    PinState::PinMode m; 
     if (mode == INPUT) {
-      m = DigitalPin::PinMode::input;
+      m = PinState::PinMode::input;
     }else if (mode == OUTPUT) {
-      m = DigitalPin::PinMode::output; 
+      m = PinState::PinMode::output; 
     }else{
-      m = DigitalPin::PinMode::pullup;
+      m = PinState::PinMode::pullup;
     }
+    PinState prev = pins[pin];
     pins[pin].mode = m;
     if (watcher) 
-      watcher(pin, pins[pin]);
+      watcher(pin, prev, pins[pin]);
   }
 
   void digitalWrite(uint8_t pin, uint8_t value) {
+    PinState prev = pins[pin];
     pins[pin].value = value;
     if (watcher) 
-      watcher(pin, pins[pin]);
+      watcher(pin, prev, pins[pin]);
   }
 
   void setPinWatcher(pinwatcher_t w) {
@@ -78,15 +50,15 @@ public:
   }
 
 private:
-  std::vector<DigitalPin> pins; 
+  std::vector<PinState> pins; 
   pinwatcher_t watcher;
 };
 
 extern Emulator Arduino; 
 
-void test_init(void);
-void test_setup_done(void);
-bool test_loop_done(void);
+void test_setup(void);
+bool test_loop(void);
 void test_exit(void);
+void test_check(const std::string &);
 
 #endif

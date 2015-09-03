@@ -2,8 +2,6 @@
 
 PATH="/opt/arduino-1.6.5:${PATH}"
 
-set -e
-
 usage () {
     echo "Usage: $0 <sketch.ino> <test.cpp>"
     exit -1 
@@ -27,17 +25,24 @@ sketchbase=$(basename $1)
 sketchdir=$(basename $1 .ino)
 testbase=$(basename $2)
 
-tempdir=$(mktemp -d emulator-$sketchbase-$testbase-XXXXXXXXXX)
+tempdir=$(mktemp -d build-$sketchbase-$testbase-XXXXXXXXXX)
+
+if [ -f /proc/cpuinfo ]; then 
+    ncpus=$(grep processor /proc/cpuinfo | wc -l) 
+else 
+    ncpus=2
+fi
 
 mkdir -p $tempdir/$sketchdir/build
-cp $1 $tempdir/$sketchdir
-arduino --verify --preserve-temp-files --pref build.path=$tempdir/build $tempdir/$sketchdir/$sketchbase
-cp $tempdir/build/${sketchdir}.cpp $tempdir
-
-cp makefile *.cpp *.h $tempdir
-cp $2 $tempdir 
-
-make -C $tempdir all 
-./$tempdir/test
-
+(
+    set -e
+    cp $1 $tempdir/$sketchdir
+    arduino --verify --preserve-temp-files --pref build.path=$tempdir/build $tempdir/$sketchdir/$sketchbase
+    cp $tempdir/build/${sketchdir}.cpp $tempdir
+    cp emulator.make emulator/* $tempdir
+    cp $2 $tempdir 
+    make -j $ncpus -f emulator.make -C $tempdir all 
+    cd ./$tempdir
+    ./test
+)
 rm -rf $tempdir
