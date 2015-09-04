@@ -98,7 +98,7 @@ int analogRead(uint8_t pin) {
 
 void analogReference(uint8_t mode) {
   __check("analogReference(%x)", mode);
-  // FIXME: record this value...
+  Arduino.setProperty("analog.reference", std::to_string(mode));
 }
 
 void analogWrite(uint8_t pin, int val) {
@@ -118,7 +118,6 @@ void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
 void test_check(const std::string &) __attribute__((weak, alias("__test_check"))) ;
 
 #define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}
-
 
 int main(int argc, char **argv) {
 

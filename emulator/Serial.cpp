@@ -2,7 +2,10 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#include "Emulator.h"
 #include "Serial.h" 
+
+#include <string>
 
 SerialEmulator::SerialEmulator()  {
   // We must make STDIN non-blocking to emulate the behavior of Arduino.
@@ -31,7 +34,7 @@ SerialEmulator::~SerialEmulator() {
 }
 
 void SerialEmulator::begin(unsigned long baud, uint8_t params) {
-  /* TODO: save this information somewhere */ 
+  Arduino.setProperty("serial.baud", std::to_string(params));
 }
 
 void SerialEmulator::end() {
