@@ -26,9 +26,7 @@ void test_setup(void) {
     });
 }
 
-bool test_loop() {
-  static int count = 0;
-  count++;
+bool test_loop(int count) {
   return (count < 4 && !(turn_on && turn_off));
 }
 
