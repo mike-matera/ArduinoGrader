@@ -64,18 +64,32 @@ void pinMode(uint8_t pin, uint8_t mode) {
   __check("pinMode(%d, %x)", pin, mode);
   assert(pin < NUMPINS);
   assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);
-  Arduino.pinMode(pin, mode);
+  
+  PinState p = Arduino.getPin(pin);
+  if (mode == INPUT) {
+    p.setMode(PinMode::input);
+  }else if (mode == OUTPUT) {
+    p.setMode(PinMode::output);
+  }else{
+    p.setMode(PinMode::pullup);
+  }
+  Arduino.setPin(pin, p);
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
   __check("digitalWrite(%d, %x)", pin, value);
   assert(pin < NUMPINS);
   assert(value == HIGH || value == LOW);
-  Arduino.digitalWrite(pin, value);
+  PinState p = Arduino.getPin(pin);
+  p.setValue(value);
+  Arduino.setPin(pin, p);
 }
 
 int digitalRead(uint8_t pin) {
   __check("digitalRead(%d)", pin);
+  assert(pin < NUMPINS);
+  PinState p = Arduino.getPin(pin);
+  return p.getValue();
 }
 
 int analogRead(uint8_t pin) {
@@ -93,13 +107,13 @@ void analogWrite(uint8_t pin, int val) {
 
 extern "C" {
   static void __test_setup(void){}
-  static bool __test_loop(void){return true;}
+  static bool __test_loop(int){return true;}
   static void __test_exit(void){}
   static void __test_check(const std::string &s){}
 }
 
 void test_setup(void) __attribute__((weak, alias("__test_setup"))) ;
-bool test_loop(void) __attribute__((weak, alias("__test_loop"))) ;
+bool test_loop(int) __attribute__((weak, alias("__test_loop"))) ;
 void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
 void test_check(const std::string &) __attribute__((weak, alias("__test_check"))) ;
 
@@ -108,17 +122,16 @@ void test_check(const std::string &) __attribute__((weak, alias("__test_check"))
 
 int main(int argc, char **argv) {
 
-  int loopcount = 1; 
+  int loopcount = 0; 
 
   try {
     test_setup(); 
     __check("setup()");
     setup();
     
-    while (test_loop()) {
+    while (test_loop(loopcount++)) {
       __check("loop() #%d", loopcount);
       loop();
-      loopcount++;
     }
 
     test_exit();
