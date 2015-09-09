@@ -51,6 +51,10 @@ public:
   bool isInput() {
     return (mode == input || mode == analog);
   }
+  
+  bool isPWM() {
+    return (mode == pwm);
+  }
 
   friend std::ostream & operator<<(std::ostream &os, const PinState & me);
   friend bool operator==(const PinState &lhs, const PinState &rhs);
