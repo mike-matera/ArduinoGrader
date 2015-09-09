@@ -68,9 +68,9 @@ void delay(unsigned long time) {
 void pinMode(uint8_t pin, uint8_t mode) {
   __check("pinMode(%d, %x)", pin, mode);
   assert(pin < NUMPINS);
-  assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);
-  
+  assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);  
   PinState p = Arduino.getPin(pin);
+  PinState o = p;
   if (mode == INPUT) {
     p.setMode(PinMode::input);
   }else if (mode == OUTPUT) {
@@ -79,6 +79,7 @@ void pinMode(uint8_t pin, uint8_t mode) {
     p.setMode(PinMode::pullup);
   }
   Arduino.setPin(pin, p);
+  Arduino.callWatcher(pin, o, p);
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
@@ -86,13 +87,18 @@ void digitalWrite(uint8_t pin, uint8_t value) {
   assert(pin < NUMPINS);
   assert(value == HIGH || value == LOW);
   PinState p = Arduino.getPin(pin);
+  PinState o = p;
   p.setValue(value);
   Arduino.setPin(pin, p);
+  Arduino.callWatcher(pin, o, p);
 }
 
 int digitalRead(uint8_t pin) {
   assert(pin < NUMPINS);
   PinState p = Arduino.getPin(pin);
+  if (p.isInput()) {
+    p.setValue(Arduino.callProducer(pin, p));
+  }
   __check("digitalRead(%d) == %x", pin, p.getValue());
   return p.getValue();
 }
@@ -101,6 +107,9 @@ int analogRead(uint8_t pin) {
   assert(pin < NUMANPINS);
   pin += A0;
   PinState p = Arduino.getPin(pin);
+  if (p.isInput()) {
+    p.setValue(Arduino.callProducer(pin, p));
+  }
   __check("analogRead(%d) == %d", pin, p.getValue());
   return p.getValue();
 }
@@ -115,9 +124,11 @@ void analogWrite(uint8_t pin, int val) {
   assert(pin < NUMPINS);
   val &= 0xff;
   PinState p = Arduino.getPin(pin);
+  PinState o = p;
   p.setMode(PinMode::pwm);
   p.setValue(val);
   Arduino.setPin(pin, p);
+  Arduino.callWatcher(pin, o, p);
 }
 
 extern "C" {

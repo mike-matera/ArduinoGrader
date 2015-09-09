@@ -51,17 +51,24 @@ public:
   }
 
   PinState getPin(int num) {
-    PinState p = pins[num];
-    if (p.isInput() && producer) 
-      p.setValue(producer(num, p));
-    return(p);
+    return pins[num];
   }
 
   void setPin(int num, PinState &p) {
-    PinState prev = pins[num];
     pins[num] = p;
-    if (watcher) 
-      watcher(num, prev, pins[num]);
+  }
+
+  void callWatcher(int p, const PinState &o, const PinState &n) {
+    if (watcher) {
+      watcher(p,o,n);
+    }
+  }
+
+  int callProducer(int p, const PinState &n) {
+    if (producer)
+      return producer(p, n);
+    else
+      return 0;
   }
 
   const map<string, string> getProperties() {
