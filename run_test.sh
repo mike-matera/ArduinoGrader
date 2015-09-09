@@ -1,6 +1,9 @@
 #!/bin/bash 
 
-PATH="/opt/arduino-1.6.5:${PATH}"
+arduino=arduino
+if [ -n "$WINDIR" ]; then
+    arduino='/cygdrive/c/Program Files (x86)/Arduino/arduino_debug.exe'
+fi
 
 usage () {
     echo "Usage: $0 <sketch.ino> <test.cpp>"
@@ -37,7 +40,18 @@ mkdir -p $tempdir/$sketchdir/build
 (
     set -e
     cp $1 $tempdir/$sketchdir
-    arduino --verify --preserve-temp-files --pref build.path=$tempdir/build $tempdir/$sketchdir/$sketchbase
+
+    # fix arduino on Cygwin
+    if [ -n "$WINDIR" ]; then
+        tempsketch=$(cygpath -w -a $tempdir/$sketchdir/$sketchbase)
+        tempbuild=$(cygpath -w -a $tempdir/build)
+    else
+        tempsketch=$tempdir/$sketchdir/$sketchbase
+        tempbuild=$tempdir/build
+    fi
+    echo $tempsketch
+    echo $tempbuild
+    "$arduino" --verify --preserve-temp-files --pref build.path=$tempbuild $tempsketch 
     cp $tempdir/build/${sketchdir}.cpp $tempdir
     cp emulator.make emulator/* $tempdir
     cp $2 $tempdir 
