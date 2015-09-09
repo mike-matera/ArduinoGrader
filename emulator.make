@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++11 -g
+CXXFLAGS = -std=gnu++11 -g
 
 C_FILES += $(wildcard *.c)
 CPP_FILES += $(wildcard *.cpp)

@@ -18,6 +18,20 @@ using std::string;
 using std::endl; 
 using std::cout; 
 
+#ifdef __CYGWIN__
+#include <sstream>
+namespace fix_cygwin {
+template <typename T> std::string to_string( const T& n ) {
+  std::ostringstream os;
+  os << n;
+  return os.str();
+}
+}
+#define TO_STRING(v) fix_cygwin::to_string(v)
+#else
+#define TO_STRING(v) std::to_string(v)
+#endif
+
 class Emulator {
   
 public:
