@@ -23,6 +23,7 @@ using std::cout;
 namespace fix_cygwin {
 template <typename T> std::string to_string( const T& n ) {
   std::ostringstream os;
+  os << n;
   return os.str();
 }
 }
