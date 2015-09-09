@@ -18,14 +18,11 @@ using std::string;
 using std::endl; 
 using std::cout; 
 
-
 #ifdef __CYGWIN__
 #include <sstream>
 namespace fix_cygwin {
 template <typename T> std::string to_string( const T& n ) {
   std::ostringstream os;
-  os << n ;
-  cout << "fucky no more!!!" << endl; 
   return os.str();
 }
 }
@@ -33,8 +30,6 @@ template <typename T> std::string to_string( const T& n ) {
 #else
 #define TO_STRING(v) std::to_string(v)
 #endif
-
-
 
 class Emulator {
   
