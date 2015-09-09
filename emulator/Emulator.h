@@ -11,6 +11,7 @@
 #include "PinState.h"
 
 #define NUMPINS 20 
+#define NUMANPINS 8
 
 using std::map; 
 using std::vector; 

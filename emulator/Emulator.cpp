@@ -91,14 +91,18 @@ void digitalWrite(uint8_t pin, uint8_t value) {
 }
 
 int digitalRead(uint8_t pin) {
-  __check("digitalRead(%d)", pin);
   assert(pin < NUMPINS);
   PinState p = Arduino.getPin(pin);
+  __check("digitalRead(%d) == %x", pin, p.getValue());
   return p.getValue();
 }
 
 int analogRead(uint8_t pin) {
-  __check("analogRead(%d)", pin);
+  assert(pin < NUMANPINS);
+  pin += A0;
+  PinState p = Arduino.getPin(pin);
+  __check("analogRead(%d) == %d", pin, p.getValue());
+  return p.getValue();
 }
 
 void analogReference(uint8_t mode) {
@@ -108,6 +112,12 @@ void analogReference(uint8_t mode) {
 
 void analogWrite(uint8_t pin, int val) {
   __check("analogWrite(%d, %d)", pin, val);
+  assert(pin < NUMPINS);
+  val &= 0xff;
+  PinState p = Arduino.getPin(pin);
+  p.setMode(PinMode::pwm);
+  p.setValue(val);
+  Arduino.setPin(pin, p);
 }
 
 extern "C" {
