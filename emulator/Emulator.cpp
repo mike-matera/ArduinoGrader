@@ -1,5 +1,10 @@
 #include <assert.h>
+
+
+#ifndef __CYGWIN__
 #include <execinfo.h>
+#endif
+
 #include <time.h>
 #include <stdio.h>
 
@@ -98,7 +103,7 @@ int analogRead(uint8_t pin) {
 
 void analogReference(uint8_t mode) {
   __check("analogReference(%x)", mode);
-  Arduino.setProperty("analog.reference", std::to_string(mode));
+  Arduino.setProperty("analog.reference", TO_STRING(mode));
 }
 
 void analogWrite(uint8_t pin, int val) {
@@ -117,7 +122,12 @@ bool test_loop(int) __attribute__((weak, alias("__test_loop"))) ;
 void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
 void test_check(const std::string &) __attribute__((weak, alias("__test_check"))) ;
 
+#ifndef __CYGWIN__
 #define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}
+
+#else
+#define STACKTRACE() {}
+#endif
 
 int main(int argc, char **argv) {
 
