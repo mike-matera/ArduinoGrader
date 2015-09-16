@@ -38,6 +38,7 @@ class Emulator {
 public:
 
   Emulator() {
+    clock_gettime(CLOCK_MONOTONIC, &starttime);
     for (int i=0; i<NUMPINS; i++) {
       pins.push_back(PinState());
     }
@@ -66,8 +67,17 @@ public:
     props[key] = val;
   }
 
+  unsigned long getTime() const {
+    struct timespec time; 
+    clock_gettime(CLOCK_MONOTONIC, &time);
+    time.tv_sec = time.tv_sec - starttime.tv_sec; 
+    time.tv_nsec = time.tv_nsec - starttime.tv_nsec;
+    return (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
+  }
+
 private:
 
+  struct timespec starttime;
   map<string, string> props;
   vector<PinState> pins; 
 

@@ -38,8 +38,6 @@ void test_pinchange(int, const PinState &, const PinState &) __attribute__((weak
 void test_propchange(const string &, const string &) __attribute__((weak, alias("__test_propchange"))) ;
 int test_getvalue(int, const PinState &) __attribute__((weak, alias("__test_getvalue"))) ;
 
-static struct timespec zerotime = { .tv_sec = 0, .tv_nsec = 0 } ; 
-
 static void __check(const char *fmt...) {
   va_list args; 
   va_start(args, fmt);
@@ -49,7 +47,6 @@ static void __check(const char *fmt...) {
   va_end(args);
 }
 
-
 /* 
  * micros() on Arduino is microseconds of operation. No good code
  * should rely on it starting at zero. Most sketches can't hande a roll-over
@@ -57,14 +54,7 @@ static void __check(const char *fmt...) {
  * at least I can prevent early roll over in 32 bits.
  */
 unsigned long micros() {
-  if (zerotime.tv_sec == 0) {
-    clock_gettime(CLOCK_MONOTONIC, &zerotime);
-  }
-  struct timespec time; 
-  clock_gettime(CLOCK_MONOTONIC, &time);
-  time.tv_sec = time.tv_sec - zerotime.tv_sec; 
-  time.tv_nsec = time.tv_nsec - zerotime.tv_nsec;
-  int t = (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
+  unsigned long t = Arduino.getTime();
   __check("micros() == %d", t);
   return t;
 }
@@ -174,8 +164,14 @@ int main(int argc, char **argv) {
 
     test_exit();
 
-  } catch (std::string s) {
-    std::cout << "Emulator died during " << s << std::endl;
+  } catch (const char *c) {
+    std::cout << "Emulator caught an exception:" << std::endl
+	      << "\t" << c << endl;
+    STACKTRACE();
+
+  } catch (const std::string &s) {
+    std::cout << "Emulator caught an exception:" << std::endl
+	      << "\t" << s << endl;
     STACKTRACE();
 
   } catch (...) {
