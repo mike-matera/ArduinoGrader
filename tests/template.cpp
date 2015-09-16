@@ -28,7 +28,7 @@ void test_setup(void) {
 
 bool test_loop(int count) {
   cout << "TEST: loop()" << endl;
-  return (count < 1 && micros() );
+  return (count < 1);
 }
 
 void test_exit(void) {
