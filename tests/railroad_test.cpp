@@ -16,11 +16,19 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (pin != leftLed && pin != rightLed) 
     throw "Illegial pin used";
 
+  if (Arduino.getPin(leftLed).isHigh() && Arduino.getPin(rightLed).isLow()) {
+    cout << "Left" << endl;
+  }
+
+  if (Arduino.getPin(leftLed).isLow() && Arduino.getPin(rightLed).isHigh()) {
+    cout << "Right" << endl;
+  }
   
 }
 
 bool test_loop(int count) {
-  return (count < 2);
+  cout << "loop #" << count << endl;
+  return (count < 4);
 }
 
 void test_exit(void) {
