@@ -20,39 +20,39 @@ public:
     value = 0; 
   }
 
-  PinMode getMode() {
-    return mode; 
-  }
-
   void setMode(PinMode m) {
     mode = m;
-  }
-
-  int getValue() {
-    return value; 
   }
 
   void setValue(int v) {
     value = v;
   }
 
-  bool isEnabled() {
+  PinMode getMode() const {
+    return mode; 
+  }
+
+  int getValue() const {
+    return value; 
+  }
+
+  bool isEnabled() const {
     return (mode == output);
   }
 
-  bool isHigh() {
+  bool isHigh() const {
     return (mode == output && value == HIGH);
   }
 
-  bool isLow() {
+  bool isLow() const {
     return (mode == output && value == LOW);
   }
 
-  bool isInput() {
+  bool isInput() const {
     return (mode == input || mode == analog);
   }
-  
-  bool isPWM() {
+
+  bool isPWM() const {
     return (mode == pwm);
   }
 
@@ -68,8 +68,5 @@ private:
 
 std::ostream & operator<<(std::ostream &os, const PinState & me);
 bool operator==(const PinState &lhs, const PinState &rhs);
-
-typedef std::function<void (int, PinState, PinState)> pinwatcher_t ; 
-typedef std::function<int (int, PinState)> producer_t ; 
 
 #endif

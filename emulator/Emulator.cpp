@@ -19,6 +19,25 @@
 Emulator Arduino; 
 
 // helpers 
+
+extern "C" {
+  static void __test_setup(void){}
+  static bool __test_loop(int){return true;}
+  static void __test_exit(void){}
+  static void __test_check(const std::string &s){}
+  static void __test_pinchange(int, const PinState &, const PinState &) {}
+  static void __test_propchange(const string &, const string &) {}
+  static int __test_getvalue(int, const PinState &) {return 0;}
+}
+
+void test_setup(void) __attribute__((weak, alias("__test_setup"))) ;
+bool test_loop(int) __attribute__((weak, alias("__test_loop"))) ;
+void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
+void test_check(const std::string &) __attribute__((weak, alias("__test_check"))) ;
+void test_pinchange(int, const PinState &, const PinState &) __attribute__((weak, alias("__test_pinchange"))) ;
+void test_propchange(const string &, const string &) __attribute__((weak, alias("__test_propchange"))) ;
+int test_getvalue(int, const PinState &) __attribute__((weak, alias("__test_getvalue"))) ;
+
 static struct timespec zerotime = { .tv_sec = 0, .tv_nsec = 0 } ; 
 
 static void __check(const char *fmt...) {
@@ -29,6 +48,7 @@ static void __check(const char *fmt...) {
   test_check(buffer);
   va_end(args);
 }
+
 
 /* 
  * micros() on Arduino is microseconds of operation. No good code
@@ -79,7 +99,7 @@ void pinMode(uint8_t pin, uint8_t mode) {
     p.setMode(PinMode::pullup);
   }
   Arduino.setPin(pin, p);
-  Arduino.callWatcher(pin, o, p);
+  test_pinchange(pin, o, p);
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
@@ -90,14 +110,14 @@ void digitalWrite(uint8_t pin, uint8_t value) {
   PinState o = p;
   p.setValue(value);
   Arduino.setPin(pin, p);
-  Arduino.callWatcher(pin, o, p);
+  test_pinchange(pin, o, p);
 }
 
 int digitalRead(uint8_t pin) {
   assert(pin < NUMPINS);
   PinState p = Arduino.getPin(pin);
   if (p.isInput()) {
-    p.setValue(Arduino.callProducer(pin, p));
+    p.setValue(test_getvalue(pin, p));
   }
   __check("digitalRead(%d) == %x", pin, p.getValue());
   return p.getValue();
@@ -108,7 +128,7 @@ int analogRead(uint8_t pin) {
   pin += A0;
   PinState p = Arduino.getPin(pin);
   if (p.isInput()) {
-    p.setValue(Arduino.callProducer(pin, p));
+    p.setValue(test_getvalue(pin, p));
   }
   __check("analogRead(%d) == %d", pin, p.getValue());
   return p.getValue();
@@ -117,6 +137,7 @@ int analogRead(uint8_t pin) {
 void analogReference(uint8_t mode) {
   __check("analogReference(%x)", mode);
   Arduino.setProperty("analog.reference", TO_STRING(mode));
+  test_propchange("analog.reference", TO_STRING(mode));
 }
 
 void analogWrite(uint8_t pin, int val) {
@@ -128,24 +149,11 @@ void analogWrite(uint8_t pin, int val) {
   p.setMode(PinMode::pwm);
   p.setValue(val);
   Arduino.setPin(pin, p);
-  Arduino.callWatcher(pin, o, p);
+  test_pinchange(pin, o, p);
 }
-
-extern "C" {
-  static void __test_setup(void){}
-  static bool __test_loop(int){return true;}
-  static void __test_exit(void){}
-  static void __test_check(const std::string &s){}
-}
-
-void test_setup(void) __attribute__((weak, alias("__test_setup"))) ;
-bool test_loop(int) __attribute__((weak, alias("__test_loop"))) ;
-void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
-void test_check(const std::string &) __attribute__((weak, alias("__test_check"))) ;
 
 #ifndef __CYGWIN__
 #define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}
-
 #else
 #define STACKTRACE() {}
 #endif

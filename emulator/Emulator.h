@@ -58,19 +58,6 @@ public:
     pins[num] = p;
   }
 
-  void callWatcher(int p, const PinState &o, const PinState &n) {
-    if (watcher) {
-      watcher(p,o,n);
-    }
-  }
-
-  int callProducer(int p, const PinState &n) {
-    if (producer)
-      return producer(p, n);
-    else
-      return 0;
-  }
-
   const map<string, string> getProperties() {
     return props; 
   }
@@ -79,20 +66,11 @@ public:
     props[key] = val;
   }
 
-  void setPinWatcher(pinwatcher_t w) {
-    watcher = w;
-  }
-
-  void setValueProducer(producer_t p) {
-    producer = p;
-  }
-
 private:
 
   map<string, string> props;
   vector<PinState> pins; 
-  pinwatcher_t watcher;
-  producer_t producer;
+
 };
 
 extern Emulator Arduino; 
@@ -101,5 +79,8 @@ void test_setup(void);
 bool test_loop(int);
 void test_exit(void);
 void test_check(const std::string &);
+void test_pinchange(int, const PinState &, const PinState &);
+void test_propchange(const string &, const string &);
+int test_getvalue(int, const PinState &);
 
 #endif

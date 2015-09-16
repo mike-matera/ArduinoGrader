@@ -36,6 +36,8 @@ SerialEmulator::~SerialEmulator() {
 void SerialEmulator::begin(unsigned long baud, uint8_t params) {
   Arduino.setProperty("serial.baud", TO_STRING(baud));
   Arduino.setProperty("serial.params", TO_STRING((int) params));
+  test_propchange("serial.baud", TO_STRING(baud));
+  test_propchange("serial.params", TO_STRING((int) params));
 }
 
 void SerialEmulator::end() {
