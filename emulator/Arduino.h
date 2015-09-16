@@ -63,6 +63,9 @@ extern "C"{
   void analogReference(uint8_t mode);
   void analogWrite(uint8_t, int);
 
+  void tone(uint8_t _pin, unsigned int frequency, unsigned long duration = 0);
+  void noTone(uint8_t _pin);
+
 #include "Serial.h"
 
 #ifdef __cplusplus

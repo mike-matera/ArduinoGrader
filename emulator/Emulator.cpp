@@ -142,6 +142,25 @@ void analogWrite(uint8_t pin, int val) {
   test_pinchange(pin, o, p);
 }
 
+void tone(uint8_t pin, unsigned int frequency, unsigned long duration) {
+  __check("tone(%d, %d, %d)", pin, frequency, duration);
+  assert(pin < NUMPINS);
+
+  // FIXME: This requires a separate thread. 
+  assert(duration == 0);
+
+  PinState p = Arduino.getPin(pin);
+  PinState o = p;
+  p.setMode(PinMode::sound);
+  p.setValue(frequency);
+  Arduino.setPin(pin, p);
+  test_pinchange(pin, o, p);
+}
+
+void noTone(uint8_t pin) {
+  tone(pin,0,0);
+}
+
 #ifndef __CYGWIN__
 #define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}
 #else

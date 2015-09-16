@@ -8,7 +8,7 @@
 #include "Arduino.h"
 
 enum PinMode {
-  output, input, pullup, pwm, tone, analog
+  output, input, pullup, pwm, sound, analog
 };
 
 class PinState {
