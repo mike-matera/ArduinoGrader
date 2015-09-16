@@ -3,12 +3,10 @@
 #include "Emulator.h"
 #include "Arduino.h"
 
-void test_setup() {
-  Arduino.setValueProducer([] (int num, PinState p) {
-      if (millis() < 5000)
-	return LOW;
-      return HIGH;
-    });
+int test_getvalue(int pin, const PinState &state) {
+  if (millis() < 1000)
+    return LOW;
+  return HIGH;
 }
 
 bool test_loop(int count) {
