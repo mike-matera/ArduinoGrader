@@ -36,7 +36,7 @@ template <typename T> std::string to_string( const T& n ) {
 class Emulator {
   
 public:
-
+  
   Emulator() {
     clock_gettime(CLOCK_MONOTONIC, &starttime);
     for (int i=0; i<NUMPINS; i++) {
@@ -51,21 +51,10 @@ public:
     }
   }
 
-  PinState getPin(int num) {
-    return pins[num];
-  }
-
-  void setPin(int num, PinState &p) {
-    pins[num] = p;
-  }
-
-  const map<string, string> getProperties() {
-    return props; 
-  }
-
-  void setProperty(const string &key, const string &val) {
-    props[key] = val;
-  }
+  PinState getPin(int num);
+  void setPin(int num, PinState &p);
+  const map<string, string> getProperties();
+  void setProperty(const string &key, const string &val);
 
   unsigned long getTime() const {
     struct timespec time; 

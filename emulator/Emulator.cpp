@@ -1,6 +1,5 @@
 #include <assert.h>
 
-
 #ifndef __CYGWIN__
 #include <execinfo.h>
 #endif
@@ -8,18 +7,46 @@
 #include <time.h>
 #include <stdio.h>
 
+#include <atomic>
 #include <cstdarg>
+#include <future>
 #include <functional>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "Arduino.h"
 #include "Emulator.h"
 
+using std::atomic_bool;
+using std::async;
+using std::future;
+
 Emulator Arduino; 
 
-// helpers 
+static std::mutex state_mutex;
 
+#define LOCK() state_mutex.lock()
+#define UNLOCK() state_mutex.unlock()
+
+PinState Emulator::getPin(int num) {
+  return pins[num];
+}
+
+void Emulator::setPin(int num, PinState &p) {
+  pins[num] = p;
+}
+
+const map<string, string> Emulator::getProperties() {
+  return props; 
+}
+
+void Emulator::setProperty(const string &key, const string &val) {
+  props[key] = val;
+}
+
+// helpers 
 extern "C" {
   static void __test_setup(void){}
   static bool __test_loop(int){return true;}
@@ -75,58 +102,93 @@ void delay(unsigned long time) {
   delayMicroseconds(time * 1000);
 }
 
+
+static void __set_and_call(int pin, PinMode mode, int value) {
+  LOCK();
+  PinState p = Arduino.getPin(pin);
+  PinState o = p;
+  p.setMode(mode);
+  p.setValue(value);
+  Arduino.setPin(pin, p);
+  UNLOCK();
+  test_pinchange(pin, o, p);
+}
+
+static void __set_and_call(int pin, PinMode mode) {
+  LOCK();
+  PinState p = Arduino.getPin(pin);
+  PinState o = p;
+  p.setMode(mode);
+  Arduino.setPin(pin, p);
+  UNLOCK();
+  test_pinchange(pin, o, p);
+}
+
+static void __set_and_call(int pin, int value) {
+  LOCK();
+  PinState p = Arduino.getPin(pin);
+  PinState o = p;
+  p.setValue(value);
+  Arduino.setPin(pin, p);
+  UNLOCK();
+  test_pinchange(pin, o, p);
+}
+
 void pinMode(uint8_t pin, uint8_t mode) {
   __check("pinMode(%d, %x)", pin, mode);
   assert(pin < NUMPINS);
   assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);  
-  PinState p = Arduino.getPin(pin);
-  PinState o = p;
+
   if (mode == INPUT) {
-    p.setMode(PinMode::input);
+    __set_and_call(pin, PinMode::input);
   }else if (mode == OUTPUT) {
-    p.setMode(PinMode::output);
+    __set_and_call(pin, PinMode::output);
   }else{
-    p.setMode(PinMode::pullup);
+    __set_and_call(pin, PinMode::pullup);
   }
-  Arduino.setPin(pin, p);
-  test_pinchange(pin, o, p);
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
   __check("digitalWrite(%d, %x)", pin, value);
   assert(pin < NUMPINS);
   assert(value == HIGH || value == LOW);
-  PinState p = Arduino.getPin(pin);
-  PinState o = p;
-  p.setValue(value);
-  Arduino.setPin(pin, p);
-  test_pinchange(pin, o, p);
+  __set_and_call(pin, value);
 }
 
 int digitalRead(uint8_t pin) {
   assert(pin < NUMPINS);
+  LOCK();
   PinState p = Arduino.getPin(pin);
-  if (p.isInput()) {
-    p.setValue(test_getvalue(pin, p));
+  bool input = p.isInput();
+  int value = 0;
+  UNLOCK();
+  if (input) {
+    value = test_getvalue(pin, p);
   }
-  __check("digitalRead(%d) == %x", pin, p.getValue());
-  return p.getValue();
+  __check("digitalRead(%d) == %x", pin, value);
+  return value;
 }
 
 int analogRead(uint8_t pin) {
   assert(pin < NUMANPINS);
   pin += A0;
+  LOCK();
   PinState p = Arduino.getPin(pin);
-  if (p.isInput()) {
-    p.setValue(test_getvalue(pin, p));
+  bool input = p.isInput();
+  int value = 0;
+  UNLOCK();
+  if (input) {
+    value = test_getvalue(pin, p);
   }
-  __check("analogRead(%d) == %d", pin, p.getValue());
-  return p.getValue();
+  __check("analogRead(%d) == %d", pin, value);
+  return value;
 }
 
 void analogReference(uint8_t mode) {
   __check("analogReference(%x)", mode);
+  LOCK();
   Arduino.setProperty("analog.reference", TO_STRING(mode));
+  UNLOCK();
   test_propchange("analog.reference", TO_STRING(mode));
 }
 
@@ -134,31 +196,48 @@ void analogWrite(uint8_t pin, int val) {
   __check("analogWrite(%d, %d)", pin, val);
   assert(pin < NUMPINS);
   val &= 0xff;
-  PinState p = Arduino.getPin(pin);
-  PinState o = p;
-  p.setMode(PinMode::pwm);
-  p.setValue(val);
-  Arduino.setPin(pin, p);
-  test_pinchange(pin, o, p);
+  __set_and_call(pin, PinMode::pwm, val);
 }
+
+static future<void> tone_future; 
+static atomic_bool future_pending;
 
 void tone(uint8_t pin, unsigned int frequency, unsigned long duration) {
   __check("tone(%d, %d, %d)", pin, frequency, duration);
   assert(pin < NUMPINS);
 
-  // FIXME: This requires a separate thread. 
-  assert(duration == 0);
+  // If there's a thread waiting it must be canceled before we set a 
+  // new tone...
+  if (future_pending) {
+    future_pending = false;
+    tone_future.wait();
+  }
 
-  PinState p = Arduino.getPin(pin);
-  PinState o = p;
-  p.setMode(PinMode::sound);
-  p.setValue(frequency);
-  Arduino.setPin(pin, p);
-  test_pinchange(pin, o, p);
+  if (duration != 0) {
+    // Set a thread to wait for the duration and turn off the tone...
+    unsigned long offtime = (Arduino.getTime()/1000) + duration;
+    future_pending = true;
+    tone_future = async(std::launch::async, [=] () {
+	while (future_pending && (Arduino.getTime()/1000) < offtime) {
+	  std::this_thread::yield();
+	}
+	if (! future_pending) {
+	  return;
+	}
+	__set_and_call(pin, PinMode::sound, 0);
+	future_pending = false;
+      });
+  }
+  __set_and_call(pin, PinMode::sound, frequency);
 }
 
 void noTone(uint8_t pin) {
-  tone(pin,0,0);
+  __check("noTone(%d)", pin);
+  if (future_pending) {
+    future_pending = false;
+    tone_future.wait();
+  }
+  __set_and_call(pin, PinMode::sound, 0);
 }
 
 #ifndef __CYGWIN__

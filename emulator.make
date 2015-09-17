@@ -1,4 +1,5 @@
-CXXFLAGS = -std=gnu++11 -g
+CXXFLAGS = -std=gnu++11 -g -pthread
+LDFLAGS = -lpthread 
 
 C_FILES += $(wildcard *.c)
 CPP_FILES += $(wildcard *.cpp)
@@ -7,7 +8,7 @@ OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
 all: test
 
 test: $(OBJS)
-	g++ -o test $(OBJS)
+	g++ -o test $(OBJS) $(LDFLAGS) 
 
 # compiler generated dependency info
 -include $(OBJS:.o=.d)
