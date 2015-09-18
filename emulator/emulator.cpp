@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "Arduino.h"
-#include "Emulator.h"
+#include "emulator.h"
 
 using std::atomic_bool;
 using std::async;
@@ -30,20 +30,20 @@ static std::mutex state_mutex;
 #define LOCK() state_mutex.lock()
 #define UNLOCK() state_mutex.unlock()
 
-PinState Emulator::getPin(int num) {
-  return pins[num];
+PinState Emulator::get_pin(int num) {
+  return pins_[num];
 }
 
-void Emulator::setPin(int num, PinState &p) {
-  pins[num] = p;
+void Emulator::set_pin(int num, PinState &p) {
+  pins_[num] = p;
 }
 
-const map<string, string> Emulator::getProperties() {
-  return props; 
+const map<string, string> Emulator::get_properties() {
+  return properties_; 
 }
 
-void Emulator::setProperty(const string &key, const string &val) {
-  props[key] = val;
+void Emulator::set_property(const string &key, const string &val) {
+  properties_[key] = val;
 }
 
 // helpers 
@@ -81,7 +81,7 @@ static void __check(const char *fmt...) {
  * at least I can prevent early roll over in 32 bits.
  */
 unsigned long micros() {
-  unsigned long t = Arduino.getTime();
+  unsigned long t = Arduino.get_time();
   __check("micros() == %d", t);
   return t;
 }
@@ -105,31 +105,31 @@ void delay(unsigned long time) {
 
 static void __set_and_call(int pin, PinMode mode, int value) {
   LOCK();
-  PinState p = Arduino.getPin(pin);
+  PinState p = Arduino.get_pin(pin);
   PinState o = p;
-  p.setMode(mode);
-  p.setValue(value);
-  Arduino.setPin(pin, p);
+  p.set_mode(mode);
+  p.set_value(value);
+  Arduino.set_pin(pin, p);
   UNLOCK();
   test_pinchange(pin, o, p);
 }
 
 static void __set_and_call(int pin, PinMode mode) {
   LOCK();
-  PinState p = Arduino.getPin(pin);
+  PinState p = Arduino.get_pin(pin);
   PinState o = p;
-  p.setMode(mode);
-  Arduino.setPin(pin, p);
+  p.set_mode(mode);
+  Arduino.set_pin(pin, p);
   UNLOCK();
   test_pinchange(pin, o, p);
 }
 
 static void __set_and_call(int pin, int value) {
   LOCK();
-  PinState p = Arduino.getPin(pin);
+  PinState p = Arduino.get_pin(pin);
   PinState o = p;
-  p.setValue(value);
-  Arduino.setPin(pin, p);
+  p.set_value(value);
+  Arduino.set_pin(pin, p);
   UNLOCK();
   test_pinchange(pin, o, p);
 }
@@ -140,11 +140,11 @@ void pinMode(uint8_t pin, uint8_t mode) {
   assert(mode == INPUT || mode == OUTPUT || mode == INPUT_PULLUP);  
 
   if (mode == INPUT) {
-    __set_and_call(pin, PinMode::input);
+    __set_and_call(pin, PinMode::kInput);
   }else if (mode == OUTPUT) {
-    __set_and_call(pin, PinMode::output);
+    __set_and_call(pin, PinMode::kOutput);
   }else{
-    __set_and_call(pin, PinMode::pullup);
+    __set_and_call(pin, PinMode::kPullup);
   }
 }
 
@@ -158,8 +158,8 @@ void digitalWrite(uint8_t pin, uint8_t value) {
 int digitalRead(uint8_t pin) {
   assert(pin < NUMPINS);
   LOCK();
-  PinState p = Arduino.getPin(pin);
-  bool input = p.isInput();
+  PinState p = Arduino.get_pin(pin);
+  bool input = p.is_input();
   int value = 0;
   UNLOCK();
   if (input) {
@@ -173,8 +173,8 @@ int analogRead(uint8_t pin) {
   assert(pin < NUMANPINS);
   pin += A0;
   LOCK();
-  PinState p = Arduino.getPin(pin);
-  bool input = p.isInput();
+  PinState p = Arduino.get_pin(pin);
+  bool input = p.is_input();
   int value = 0;
   UNLOCK();
   if (input) {
@@ -187,7 +187,7 @@ int analogRead(uint8_t pin) {
 void analogReference(uint8_t mode) {
   __check("analogReference(%x)", mode);
   LOCK();
-  Arduino.setProperty("analog.reference", TO_STRING(mode));
+  Arduino.set_property("analog.reference", TO_STRING(mode));
   UNLOCK();
   test_propchange("analog.reference", TO_STRING(mode));
 }
@@ -196,7 +196,7 @@ void analogWrite(uint8_t pin, int val) {
   __check("analogWrite(%d, %d)", pin, val);
   assert(pin < NUMPINS);
   val &= 0xff;
-  __set_and_call(pin, PinMode::pwm, val);
+  __set_and_call(pin, PinMode::kPWM, val);
 }
 
 static future<void> tone_future; 
@@ -215,20 +215,20 @@ void tone(uint8_t pin, unsigned int frequency, unsigned long duration) {
 
   if (duration != 0) {
     // Set a thread to wait for the duration and turn off the tone...
-    unsigned long offtime = (Arduino.getTime()/1000) + duration;
+    unsigned long offtime = (Arduino.get_time()/1000) + duration;
     future_pending = true;
     tone_future = async(std::launch::async, [=] () {
-	while (future_pending && (Arduino.getTime()/1000) < offtime) {
+	while (future_pending && (Arduino.get_time()/1000) < offtime) {
 	  std::this_thread::yield();
 	}
 	if (! future_pending) {
 	  return;
 	}
-	__set_and_call(pin, PinMode::sound, 0);
+	__set_and_call(pin, PinMode::kSound, 0);
 	future_pending = false;
       });
   }
-  __set_and_call(pin, PinMode::sound, frequency);
+  __set_and_call(pin, PinMode::kSound, frequency);
 }
 
 void noTone(uint8_t pin) {
@@ -237,7 +237,7 @@ void noTone(uint8_t pin) {
     future_pending = false;
     tone_future.wait();
   }
-  __set_and_call(pin, PinMode::sound, 0);
+  __set_and_call(pin, PinMode::kSound, 0);
 }
 
 #ifndef __CYGWIN__

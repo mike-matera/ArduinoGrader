@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-#include "Emulator.h"
+#include "emulator.h"
 #include "Serial.h" 
 
 #include <string>
@@ -34,8 +34,8 @@ SerialEmulator::~SerialEmulator() {
 }
 
 void SerialEmulator::begin(unsigned long baud, uint8_t params) {
-  Arduino.setProperty("serial.baud", TO_STRING(baud));
-  Arduino.setProperty("serial.params", TO_STRING((int) params));
+  Arduino.set_property("serial.baud", TO_STRING(baud));
+  Arduino.set_property("serial.params", TO_STRING((int) params));
   test_propchange("serial.baud", TO_STRING(baud));
   test_propchange("serial.params", TO_STRING((int) params));
 }

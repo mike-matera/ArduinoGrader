@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "Emulator.h"
+#include "emulator.h"
 
 using std::cout; 
 using std::endl;
@@ -16,12 +16,12 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (prev == next) 
     return; 
 
-  if (pin == 13 && next.isHigh()) {
+  if (pin == 13 && next.is_high()) {
     std::cout << "LED is ON" << std::endl;
     turn_on = true;
   }
 
-  if (pin == 13 && next.isLow()) {
+  if (pin == 13 && next.is_low()) {
     std::cout << "LED is OFF" << std::endl;
     turn_off = true;
   }

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Emulator.h"
+#include "emulator.h"
 
 using std::cout; 
 using std::endl;
@@ -39,7 +39,7 @@ void test_check(const std::string &what) {
   if (what.substr(0,6) != "micros") { 
     std::cout << "TEST: trace: " << what << std::endl;
   }
-  if (Arduino.getTime() > 5000000) {
+  if (Arduino.get_time() > 5000000) {
     throw std::string("Simulator forced to exit after 5 seconds.");
   }
 }

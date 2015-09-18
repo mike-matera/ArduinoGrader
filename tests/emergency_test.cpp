@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Emulator.h"
+#include "emulator.h"
 
 using std::cout; 
 using std::endl;
@@ -17,11 +17,11 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (pin != ledPin) 
     throw "Unexpected pin change!";
   
-  int time = Arduino.getTime();
-  if (prev.isLow() && next.isHigh()) {
+  int time = Arduino.get_time();
+  if (prev.is_low() && next.is_high()) {
     cout << "low  time: " << ((time - last)/1000) << endl;
   }
-  if (prev.isHigh() && next.isLow()) {
+  if (prev.is_high() && next.is_low()) {
     cout << "high time: " << ((time - last)/1000) << endl;
   }
 

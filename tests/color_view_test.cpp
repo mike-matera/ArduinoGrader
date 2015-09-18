@@ -1,8 +1,6 @@
-#include <stdio.h>
-
 #include <iostream>
 
-#include "Emulator.h"
+#include "emulator.h"
 
 using std::cout; 
 using std::endl;
@@ -23,9 +21,9 @@ void test_propchange(const string &prop, const string &value) {
 
 int test_getvalue(int pin, const PinState &state) {
   
-  float reflect = ((Arduino.getPin(redPin).getValue() / 255.0) * 0.75 
-		  + (Arduino.getPin(greenPin).getValue() / 255.0) * 0.50
-		  + (Arduino.getPin(bluePin).getValue() / 255.0) * 0.25)
+  float reflect = ((Arduino.get_pin(redPin).get_value() / 255.0) * 0.75 
+		  + (Arduino.get_pin(greenPin).get_value() / 255.0) * 0.50
+		  + (Arduino.get_pin(bluePin).get_value() / 255.0) * 0.25)
     * 1023.0;
 
   if (reflect > 1023)
@@ -35,7 +33,7 @@ int test_getvalue(int pin, const PinState &state) {
 }
 
 void test_setup(void) {
-  printf("Sarting ColorView test.\n");
+  cout << "Sarting ColorView test.\n";
 }
 
 bool test_loop(int count) {

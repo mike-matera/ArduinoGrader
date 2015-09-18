@@ -51,7 +51,7 @@ mkdir -p $tempdir/$sketchdir/build
     fi
     "$arduino" --verify --preserve-temp-files --pref build.path=$tempbuild $tempsketch 
     cp $tempdir/build/${sketchdir}.cpp $tempdir
-    cp emulator.make emulator/* $tempdir
+    cp emulator.make emulator/* arduino/* $tempdir
     cp $2 $tempdir 
     make -j $ncpus -f emulator.make -C $tempdir all 
     cd ./$tempdir

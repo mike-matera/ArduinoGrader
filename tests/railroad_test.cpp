@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Emulator.h"
+#include "emulator.h"
 
 using std::cout; 
 using std::endl;
@@ -16,11 +16,11 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (pin != leftLed && pin != rightLed) 
     throw "Illegial pin used";
 
-  if (Arduino.getPin(leftLed).isHigh() && Arduino.getPin(rightLed).isLow()) {
+  if (Arduino.get_pin(leftLed).is_high() && Arduino.get_pin(rightLed).is_low()) {
     cout << "Left" << endl;
   }
 
-  if (Arduino.getPin(leftLed).isLow() && Arduino.getPin(rightLed).isHigh()) {
+  if (Arduino.get_pin(leftLed).is_low() && Arduino.get_pin(rightLed).is_high()) {
     cout << "Right" << endl;
   }
   

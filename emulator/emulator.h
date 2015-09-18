@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "Arduino.h"
-#include "PinState.h"
+#include "pin_state.h"
 
-#define NUMPINS 20 
-#define NUMANPINS 8
+#define NUMPINS    20 
+#define NUMANPINS  8
 
 using std::map; 
 using std::vector; 
@@ -38,37 +38,37 @@ class Emulator {
 public:
   
   Emulator() {
-    clock_gettime(CLOCK_MONOTONIC, &starttime);
+    clock_gettime(CLOCK_MONOTONIC, &start_time_);
     for (int i=0; i<NUMPINS; i++) {
-      pins.push_back(PinState());
+      pins_.push_back(PinState());
     }
   }
 
   ~Emulator() {
     cout << "Emulator exiting. Properties list:" << endl;
-    for (map<string,string>::iterator it = props.begin(); it != props.end(); it++) {
+    for (map<string,string>::iterator it = properties_.begin(); it != properties_.end(); it++) {
       cout << "\t" << it->first << " " << it->second << endl;
     }
   }
 
-  PinState getPin(int num);
-  void setPin(int num, PinState &p);
-  const map<string, string> getProperties();
-  void setProperty(const string &key, const string &val);
+  PinState get_pin(int num);
+  void set_pin(int num, PinState &p);
+  const map<string, string> get_properties();
+  void set_property(const string &key, const string &val);
 
-  unsigned long getTime() const {
+  unsigned long get_time() const {
     struct timespec time; 
     clock_gettime(CLOCK_MONOTONIC, &time);
-    time.tv_sec = time.tv_sec - starttime.tv_sec; 
-    time.tv_nsec = time.tv_nsec - starttime.tv_nsec;
+    time.tv_sec = time.tv_sec - start_time_.tv_sec; 
+    time.tv_nsec = time.tv_nsec - start_time_.tv_nsec;
     return (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
   }
 
 private:
 
-  struct timespec starttime;
-  map<string, string> props;
-  vector<PinState> pins; 
+  struct timespec start_time_;
+  map<string, string> properties_;
+  vector<PinState> pins_; 
 
 };
 
