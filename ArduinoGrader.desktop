@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Arduino Grader
+Comment=Grade an Arduino sketch.
+Exec=/home/mimatera/ArduinoGrader/grade.sh
+Icon=/usr/share/pdfedit/icon/pdfedit_logo.png
+Type=Application
+StartupNotify=false
+Terminal=true
