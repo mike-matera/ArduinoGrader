@@ -16,12 +16,17 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (prev == next) 
     return; 
 
-  if (pin == 13 && next.is_high()) {
+  if (!prev.is_enabled() && next.is_enabled()) {\
+    cout << "Enabled pin " << pin << endl; 
+    led_pin = pin; 
+  }
+
+  if (pin == led_pin && next.is_high()) {
     std::cout << "LED is ON" << std::endl;
     turn_on = true;
   }
 
-  if (pin == 13 && next.is_low()) {
+  if (pin == led_pin && next.is_low()) {
     std::cout << "LED is OFF" << std::endl;
     turn_off = true;
   }
