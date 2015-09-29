@@ -49,7 +49,11 @@ public:
   }
 
   bool is_input() const {
-    return (mode_ == kInput || mode_ == kAnalog);
+    return (mode_ == kInput);
+  }
+
+  bool is_analog() const {
+    return (mode_ == kInput);
   }
 
   bool is_PWM() const {

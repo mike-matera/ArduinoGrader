@@ -160,7 +160,7 @@ int digitalRead(uint8_t pin) {
   LOCK();
   PinState p = Arduino.get_pin(pin);
   bool input = p.is_input();
-  int value = 0;
+  int value = p.get_value();
   UNLOCK();
   if (input) {
     value = test_getvalue(pin, p);
@@ -169,13 +169,14 @@ int digitalRead(uint8_t pin) {
   return value;
 }
 
+// FIXME: What should happen when you try to read a pin that's not in analog mode?
 int analogRead(uint8_t pin) {
   assert(pin < NUMANPINS);
   pin += A0;
   LOCK();
   PinState p = Arduino.get_pin(pin);
-  bool input = p.is_input();
-  int value = 0;
+  bool input = p.is_analog();
+  int value = p.get_value();
   UNLOCK();
   if (input) {
     value = test_getvalue(pin, p);
