@@ -6,13 +6,17 @@ using std::cout;
 using std::endl;
 using std::string; 
 
-static int ledPin = 13; 
+static int ledPin = -1; 
 
 void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   static int last = 0; 
 
   if (prev == next)
     return;
+
+  if (!prev.is_enabled() && next.is_enabled()) {
+    ledPin = pin;
+  }
   
   if (pin != ledPin) 
     throw "Unexpected pin change!";

@@ -49,3 +49,14 @@ void test_exit(void) {
     cout << "TEST FAILED" << endl;
   }
 }
+
+void test_check(const std::string &what) {
+  if (what.substr(0,6) == "micros") { 
+    if (Arduino.get_pin(leftLed).is_low() && Arduino.get_pin(rightLed).is_low()) {
+      throw std::string("Both LEDs are off during delay().");
+    }
+    if (Arduino.get_pin(leftLed).is_high() && Arduino.get_pin(rightLed).is_high()) {
+      throw std::string("Both LEDs are on during delay().");
+    }
+  }
+}
