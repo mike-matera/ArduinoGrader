@@ -5,6 +5,7 @@
 #include "emulator.h"
 #include "Serial.h" 
 
+#include <iostream>
 #include <string>
 
 SerialEmulator::SerialEmulator()  {
@@ -44,17 +45,24 @@ void SerialEmulator::end() {
 }
 
 int SerialEmulator::available() {
-  int got = fgetc(stdin); 
-  ungetc(got, stdin);
-  if (got == EOF) 
+  istream *input = Arduino.get_istream();
+  int got = input->get();
+  input->unget();
+  input->clear();
+
+  if (got == EOF)
     return 0;
   else
     return 1;
+
 }
 
 int SerialEmulator::peek() {
-  int got = fgetc(stdin); 
-  ungetc(got, stdin);
+  istream *input = Arduino.get_istream();
+  int got = input->get();
+  input->unget();
+  input->clear();
+
   if (got == EOF) 
     return -1;
   else
@@ -62,7 +70,10 @@ int SerialEmulator::peek() {
 }
 
 int SerialEmulator::read() {
-  int got = fgetc(stdin);
+  istream *input = Arduino.get_istream();
+  int got = input->get();
+  input->clear();
+
   if (got == EOF)
     return -1;
   else
@@ -74,11 +85,13 @@ int SerialEmulator::availableForWrite() {
 }
 
 void SerialEmulator::flush() {
-  fflush(stdin); 
+  ostream *output = Arduino.get_ostream();
+  output->flush();
 }
 
 size_t SerialEmulator::write(uint8_t c) {
-  fputc(c, stdout);
+  ostream *output = Arduino.get_ostream();
+  output->put(c);
 }
 
 SerialEmulator Serial;

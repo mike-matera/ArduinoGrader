@@ -18,6 +18,8 @@ using std::vector;
 using std::string; 
 using std::endl; 
 using std::cout; 
+using std::istream; 
+using std::ostream; 
 
 #ifdef __CYGWIN__
 #include <sstream>
@@ -38,6 +40,8 @@ class Emulator {
 public:
   
   Emulator() {
+    input_ = NULL;
+    output_ = NULL;
     clock_gettime(CLOCK_MONOTONIC, &start_time_);
     for (int i=0; i<NUMPINS; i++) {
       pins_.push_back(PinState());
@@ -64,11 +68,35 @@ public:
     return (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
   }
 
+  istream *get_istream() {
+    if (input_ == NULL) 
+      return &std::cin;
+    else
+      return input_;
+  }
+
+  ostream *get_ostream() {
+    if (output_ == NULL) 
+      return &std::cout;
+    else
+      return output_;
+  }
+
+  void set_istream(istream *s) {
+    input_ = s; 
+  }
+
+  void set_ostream(ostream *s) {
+    output_ = s; 
+  }
+
 private:
 
   struct timespec start_time_;
   map<string, string> properties_;
   vector<PinState> pins_; 
+  istream *input_;
+  ostream *output_; 
 
 };
 
