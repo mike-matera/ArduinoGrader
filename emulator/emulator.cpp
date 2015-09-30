@@ -48,6 +48,7 @@ void Emulator::set_property(const string &key, const string &val) {
 
 // helpers 
 extern "C" {
+  static void __test_async(void){}
   static void __test_setup(void){}
   static bool __test_loop(int){return true;}
   static void __test_exit(void){}
@@ -57,6 +58,7 @@ extern "C" {
   static int __test_getvalue(int, const PinState &) {return 0;}
 }
 
+void test_async(void) __attribute__((weak, alias("__test_async"))) ;
 void test_setup(void) __attribute__((weak, alias("__test_setup"))) ;
 bool test_loop(int) __attribute__((weak, alias("__test_loop"))) ;
 void test_exit(void) __attribute__((weak, alias("__test_exit"))) ;
@@ -250,8 +252,10 @@ void noTone(uint8_t pin) {
 int main(int argc, char **argv) {
 
   int loopcount = 0; 
+  future<void> async_exe;
 
   try {
+    async_exe = async(std::launch::async, test_async);
     test_setup(); 
     __check("setup()");
     setup();
@@ -276,5 +280,12 @@ int main(int argc, char **argv) {
   } catch (...) {
     std::cout << "Emulator died because of an unknown exception." << std::endl;
     STACKTRACE();
+  }
+
+  std::chrono::seconds t(1);
+  if (async_exe.valid()) {
+    while (async_exe.wait_for(t) == std::future_status::timeout) {
+      cout << "Waiting for test_async()..." << endl;
+    }
   }
 }

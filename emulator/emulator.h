@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "Arduino.h"
@@ -90,6 +91,14 @@ public:
     output_ = s; 
   }
 
+  void busy_wait(int usec) {
+    int start = get_time();
+    int wait = usec * 1000;
+    while (get_time() < (start + wait)) {
+      std::this_thread::yield();
+    }
+  }
+
 private:
 
   struct timespec start_time_;
@@ -97,11 +106,11 @@ private:
   vector<PinState> pins_; 
   istream *input_;
   ostream *output_; 
-
 };
 
 extern Emulator Arduino; 
 
+void test_async(void);
 void test_setup(void);
 bool test_loop(int);
 void test_exit(void);
