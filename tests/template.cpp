@@ -6,6 +6,9 @@ using std::cout;
 using std::endl;
 using std::string; 
 
+void test_async() {
+  cout << "TEST: test_async()" << endl;
+}
 
 void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (prev == next)
