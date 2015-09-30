@@ -1,3 +1,4 @@
+#include <future>
 #include <iostream>
 #include <sstream>
 
@@ -7,10 +8,24 @@ using std::cout;
 using std::endl;
 using std::string; 
 using std::stringstream; 
+using std::async;
+using std::future;
 
 static int ledPin = 0;
 
 static stringstream input; 
+
+volatile bool saw_400 = false;
+volatile bool saw_600 = false;
+volatile bool saw_800 = false;
+
+void test_async() {
+  input << 200 << endl; 
+  Arduino.busy_wait(2000);
+  input << 300 << endl; 
+  Arduino.busy_wait(3000);
+  input << 400 << endl;
+}
 
 void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   static int blinkPeriod = 0; 
@@ -21,28 +36,23 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
 
   if (!prev.is_enabled() && next.is_enabled()) {
     ledPin = pin; 
-    cout << "Enabled pin: " << pin; 
+    cout << "Enabled pin: " << pin << endl; 
   }
 
   if (pin == ledPin && prev.get_value() == HIGH && next.get_value() == LOW) {
     int t = Arduino.get_time() / 1000;
     int p = t - lastTime;
-    //if (p != blinkPeriod) {
-      cout << "Blink period: " << (t - lastTime) << endl;
-      //}
+    cout << "Blink period: " << (t - lastTime) << endl;
+    if (p == 400) {
+      saw_400 = true;
+    }else if (p == 600) {
+      saw_600 = true;
+    }else if (p == 800) {
+      saw_800 = true;
+    }
     lastTime = t;
     blinkPeriod = p;
   }
-
-}
-
-void test_propchange(const string &prop, const string &value) {
-  cout << "TEST: test_propchange(): " << prop << " = " << value << endl;
-}
-
-int test_getvalue(int pin, const PinState &state) {
-  cout << "TEST: test_getvalue(): " << pin << endl;
-  return 0;
 }
 
 void test_setup(void) {
@@ -50,18 +60,16 @@ void test_setup(void) {
   Arduino.set_istream(&input);
 }
 
-/*
 bool test_loop(int count) {
-  cout << "TEST: loop() #" << count << endl;
-  if (count == 10) {
-    input << "300" << endl;
-  }
-  return true;
+  return (count < 20 && !(saw_400 && saw_600 && saw_800)) ;
 }
-*/
 
 void test_exit(void) {
-  cout << "TEST: exit()" << endl;
+  if (saw_400 && saw_600 && saw_800) {
+    cout << "TEST PASSED" << endl;
+  }else{
+    cout << "TEST FAILED" << endl;
+  }
 }
 
 void test_check(const std::string &what) {
