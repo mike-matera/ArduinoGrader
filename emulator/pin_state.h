@@ -49,7 +49,7 @@ public:
   }
 
   bool is_input() const {
-    return (mode_ == kInput);
+    return (mode_ == kInput || mode_ == kPullup);
   }
 
   bool is_analog() const {
