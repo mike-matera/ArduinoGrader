@@ -39,12 +39,14 @@ void test_setup() {
 }
 
 bool test_loop(int count) {
-  return (sum != 45);
+  return (sum != 45 && sum != 2250);
 }
 
 void test_exit() {
   if (sum == 45) {
-    cout << "TEST PASSED" << endl;
+    cout << "TEST PASSED (common cathode)" << endl;
+  }else if (sum == 2250) {
+    cout << "TEST PASSED (common anode)" << endl;
   }else{
     cout << "TEST FAILED" << endl;
   }
