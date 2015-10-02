@@ -39,6 +39,8 @@ extern "C"{
 #define FALLING 2
 #define RISING 3
 
+#define LED_BUILTIN 13 
+
   static const uint8_t A0 = 14;
   static const uint8_t A1 = 15;
   static const uint8_t A2 = 16;

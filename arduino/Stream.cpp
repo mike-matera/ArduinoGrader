@@ -25,6 +25,8 @@
 #include "Arduino.h"
 #include "Stream.h"
 
+#include "emulator.h"
+
 #define PARSE_TIMEOUT 1000  // default number of milli-seconds to wait
 #define NO_SKIP_CHAR  1  // a magic char not found in a valid ASCII numeric field
 
@@ -71,6 +73,9 @@ int Stream::peekNextDigit()
 
 void Stream::setTimeout(unsigned long timeout)  // sets the maximum number of milliseconds to wait
 {
+  Arduino.set_property("stream.timeout", TO_STRING(timeout));
+  test_propchange("stream.timeout", TO_STRING(timeout));
+
   _timeout = timeout;
 }
 
