@@ -1,3 +1,4 @@
+#include <climits>
 #include <future>
 #include <iostream>
 #include <sstream>
@@ -19,12 +20,40 @@ volatile bool saw_400 = false;
 volatile bool saw_600 = false;
 volatile bool saw_800 = false;
 
+volatile bool use_lf = false;
+volatile bool start_input = false; 
+
 void test_async() {
-  input << 200 << endl; 
-  Arduino.busy_wait(2000);
-  input << 300 << endl; 
-  Arduino.busy_wait(3000);
-  input << 400 << endl;
+  // We don't know what to do with line endings
+  // until after setup is run...
+  while (! start_input) 
+    Arduino.busy_wait(10);
+
+  input << 200;
+  if (use_lf)
+    input << endl;
+
+  while (!saw_400) 
+    Arduino.busy_wait(10);
+
+  input << 300; 
+  if (use_lf) 
+    input << endl;
+
+  while (!saw_600) 
+    Arduino.busy_wait(10);
+
+  input << 400;
+  if (use_lf) 
+    input << endl;
+
+}
+
+void test_propchange(const string &prop, const string &value) {
+  if (prop == "stream.timeout" && value == TO_STRING(ULONG_MAX)) {
+    cout << "NOTE: stream.timeout seems to be set to -1: enabled NL" << endl;
+    use_lf = true;
+  }
 }
 
 void test_pinchange(int pin, const PinState &prev, const PinState &next) {
@@ -55,13 +84,14 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   }
 }
 
-void test_setup(void) {
+void test_setup() {
   cout << "TEST: test_setup()" << endl;
   Arduino.set_istream(&input);
 }
 
 bool test_loop(int count) {
-  return (count < 20 && !(saw_400 && saw_600 && saw_800)) ;
+  start_input = true;
+  return !(saw_400 && saw_600 && saw_800) ;
 }
 
 void test_exit(void) {
@@ -74,6 +104,7 @@ void test_exit(void) {
 
 void test_check(const std::string &what) {
   if (Arduino.get_time() > 10000000) {
+    saw_400 = saw_600 = saw_800 = true;
     throw std::string("Simulator forced to exit after 10 seconds.");
   }
 }
