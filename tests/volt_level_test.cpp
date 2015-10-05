@@ -6,8 +6,8 @@ using std::cout;
 using std::endl;
 using std::string; 
 
-volatile int codes[] = {450, 451, 552, 553};
-volatile int voltage = -1;
+static volatile int codes[] = {450, 451, 552, 553};
+static volatile int voltage = -1;
 
 int test_getvalue(int pin, const PinState &state) {  
   return codes[voltage];
