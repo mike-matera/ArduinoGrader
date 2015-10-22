@@ -329,7 +329,6 @@ unsigned char String::concat(double num)
 /*  Concatenate                              */
 /*********************************************/
 
-/*
 StringSumHelper & operator + (const StringSumHelper &lhs, const String &rhs)
 {
 	StringSumHelper &a = const_cast<StringSumHelper&>(lhs);
@@ -399,7 +398,6 @@ StringSumHelper & operator + (const StringSumHelper &lhs, double num)
 	if (!a.concat(num)) a.invalidate();
 	return a;
 }
-*/
 
 /*********************************************/
 /*  Comparison                               */
