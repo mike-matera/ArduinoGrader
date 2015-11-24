@@ -33,7 +33,7 @@ void test_setup() {
   input << "R\nBo\nO\n"; // 21k ohms 
   input << "Ge\nBu\nY\n"; // 21k ohms 
   input << "Ge\nBu\nGe\n"; // 21k ohms 
-  input << "Ge\nBu\nBl\n"; // 21k ohms 
+  input << "Ge\nBu\nBa\n"; // 21k ohms 
   input << "Ge\nBu\nV\n"; // 21k ohms 
   input << "Ge\nBu\nGa\n"; // 21k ohms 
   input << "Ge\nBu\nW\n"; // 21k ohms 
