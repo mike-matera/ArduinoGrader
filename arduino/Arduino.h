@@ -94,4 +94,7 @@ void randomSeed(unsigned long);
 
 void __check(const char *fmt...);
 
+// byte doesn't seem to be avialalbe on my host...
+typedef uint8_t byte;
+
 #endif
