@@ -16,6 +16,10 @@
 #include <thread>
 #include <vector>
 
+extern "C" {
+  #include "stdlib.h"
+}
+
 #include "Arduino.h"
 #include "emulator.h"
 
@@ -67,7 +71,7 @@ void test_pinchange(int, const PinState &, const PinState &) __attribute__((weak
 void test_propchange(const string &, const string &) __attribute__((weak, alias("__test_propchange"))) ;
 int test_getvalue(int, const PinState &) __attribute__((weak, alias("__test_getvalue"))) ;
 
-static void __check(const char *fmt...) {
+void __check(const char *fmt...) {
   va_list args; 
   va_start(args, fmt);
   char buffer[256]; 
@@ -243,6 +247,37 @@ void noTone(uint8_t pin) {
   __set_and_call(pin, PinMode::kSound, 0);
 }
 
+void randomSeed(unsigned long seed)
+{
+  if (seed != 0) {
+    srandom(seed);
+  }
+}
+
+long random(long howbig)
+{
+  if (howbig == 0) {
+    return 0;
+  }
+  return random() % howbig;
+}
+
+long random(long howsmall, long howbig)
+{
+  if (howsmall >= howbig) {
+    return howsmall;
+  }
+  long diff = howbig - howsmall;
+  return random(diff) + howsmall;
+}
+
+/*
+long map(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+*/
+
 #ifndef __CYGWIN__
 #define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}
 #else
@@ -289,3 +324,4 @@ int main(int argc, char **argv) {
     }
   }
 }
+

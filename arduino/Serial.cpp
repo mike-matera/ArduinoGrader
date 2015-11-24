@@ -35,6 +35,7 @@ SerialEmulator::~SerialEmulator() {
 }
 
 void SerialEmulator::begin(unsigned long baud, uint8_t params) {
+  __check("Serial.begin(%d, $x)", baud, params);
   Arduino.set_property("serial.baud", TO_STRING(baud));
   Arduino.set_property("serial.params", TO_STRING((int) params));
   test_propchange("serial.baud", TO_STRING(baud));
@@ -50,11 +51,14 @@ int SerialEmulator::available() {
   input->unget();
   input->clear();
 
+  int rval;
   if (got == EOF)
-    return 0;
+    rval = 0;
   else
-    return 1;
-
+    rval = 1;
+  
+  __check("Serial.available() == %d", rval); 	  
+  return rval;
 }
 
 int SerialEmulator::peek() {
@@ -63,10 +67,14 @@ int SerialEmulator::peek() {
   input->unget();
   input->clear();
 
+  int rval;
   if (got == EOF) 
-    return -1;
+    rval = -1;
   else
-    return got;
+    rval = got;
+
+  __check("Serial.peek() == %d", rval); 	  
+  return rval;
 }
 
 int SerialEmulator::read() {
@@ -74,22 +82,29 @@ int SerialEmulator::read() {
   int got = input->get();
   input->clear();
 
+  int rval;
   if (got == EOF)
-    return -1;
+    rval = -1;
   else
-    return got;
+    rval = got;
+  
+  __check("Serial.read() == %d", rval);
+  return rval;
 }
 
 int SerialEmulator::availableForWrite() {
+  __check("Serial.availableForWrite() == %d", 1);
   return 1;
 }
 
 void SerialEmulator::flush() {
+  __check("Serial.flush()");
   ostream *output = Arduino.get_ostream();
   output->flush();
 }
 
 size_t SerialEmulator::write(uint8_t c) {
+  __check("Serial.write(%d)", c);
   ostream *output = Arduino.get_ostream();
   output->put(c);
 }

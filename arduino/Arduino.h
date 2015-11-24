@@ -83,9 +83,15 @@ extern "C"{
 
 #ifdef __cplusplus
 }
+#endif
+
+long random(long);
+long random(long, long);
+void randomSeed(unsigned long);
+//long map(long, long, long, long, long);
 
 #include "Serial.h"
 
-#endif
+void __check(const char *fmt...);
 
 #endif
