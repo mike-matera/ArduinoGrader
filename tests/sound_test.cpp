@@ -56,7 +56,7 @@ char getChar(int freq) {
 }
 
 void validate() {
-  cout << "=== Tone validation pass ===" << endl;
+  cout << endl << endl << "=== Tone validation pass ===" << endl;
   note playing; 
   playing.tone = 0; 
   playing.ts = 0; 
