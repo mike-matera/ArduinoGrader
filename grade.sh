@@ -63,6 +63,16 @@ mkdir -p "$tempdir/$sketchdir/build"
     echo "$tempdir"
     cp "$1" "$tempdir/$sketchdir/$(basename "$sketchfix")"
 
+    # Copy libraries... this is ugly 
+    srcdir=$(dirname "$1");
+    declare -a extrasrc;
+    for ext in "$srcdir"/*.h "$srcdir"/*.cpp; do 
+	extrasrc+=( $(basename "$ext") )
+	echo "Copying (possibly) related source: $ext"
+	cp "$ext" "$tempdir/$sketchdir"
+	gedit "$ext" > /dev/null 2>&1 & 
+    done
+
     # fix arduino on Cygwin
     if [ -n "$WINDIR" ]; then
         tempsketch=$(cygpath -w -a "$tempdir/$sketchdir/$sketchbase")
@@ -73,13 +83,19 @@ mkdir -p "$tempdir/$sketchdir/build"
     fi
     "$arduino" --verify --preserve-temp-files --pref build.path="$tempbuild" "$tempsketch"
     cp "$tempdir/build/${sketchdir}.cpp" "$tempdir"
+    # copy extra sources
+    for ext in ${extrasrc[@]}; do 
+	cp "$tempdir/build/$ext" "$tempdir"
+    done
+
     cp "$installdir"/emulator.make "$installdir"/emulator/* "$installdir"/arduino/* "$tempdir"
     cp "$installdir"/tests/"$testbase" "$tempdir"
     make -j $ncpus -f emulator.make -C "$tempdir" all 
     cd "$tempdir"
     ./test
 )
-rm -rf "$tempdir"
 
 echo "Hit enter to continue..."
 read DUMMY
+
+rm -rf "$tempdir"
