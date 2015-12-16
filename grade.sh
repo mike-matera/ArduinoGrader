@@ -2,6 +2,10 @@
 
 PATH=/opt/arduino-1.6.5:$PATH
 arduino=arduino
+
+# null globbing... breaks my search for related source
+shopt -s nullglob
+
 if [ -n "$WINDIR" ]; then
     arduino='/cygdrive/c/Program Files (x86)/Arduino/arduino_debug.exe'
 fi
