@@ -33,7 +33,7 @@ Servo::Servo()
   else
     this->servoIndex = INVALID_SERVO ;  // too many servos
 
-  __check("Servo::Servo(): number: %d", this->servoIndex);
+  //__check("Servo::Servo(): number: %d", this->servoIndex);
 }
 
 // attach the given pin to the next free channel, sets pinMode, returns channel number or 0 if failure
