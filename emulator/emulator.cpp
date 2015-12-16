@@ -42,7 +42,7 @@ void Emulator::set_pin(int num, PinState &p) {
   pins_[num] = p;
 }
 
-const map<string, string> Emulator::get_properties() {
+const std::map<string, string> Emulator::get_properties() {
   return properties_; 
 }
 
@@ -271,12 +271,10 @@ long random(long howsmall, long howbig)
   return random(diff) + howsmall;
 }
 
-/*
 long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-*/
 
 #ifndef __CYGWIN__
 #define STACKTRACE() {void *_sf[100]; backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));}

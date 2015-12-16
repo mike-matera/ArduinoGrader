@@ -14,7 +14,6 @@
 #define NUMPINS    20 
 #define NUMANPINS  8
 
-using std::map; 
 using std::vector; 
 using std::string; 
 using std::endl; 
@@ -51,14 +50,14 @@ public:
 
   ~Emulator() {
     cout << "Emulator exiting. Properties list:" << endl;
-    for (map<string,string>::iterator it = properties_.begin(); it != properties_.end(); it++) {
+    for (std::map<string,string>::iterator it = properties_.begin(); it != properties_.end(); it++) {
       cout << "\t" << it->first << " " << it->second << endl;
     }
   }
 
   PinState get_pin(int num);
   void set_pin(int num, PinState &p);
-  const map<string, string> get_properties();
+  const std::map<string, string> get_properties();
   void set_property(const string &key, const string &val);
 
   unsigned long get_time() const {
@@ -102,7 +101,7 @@ public:
 private:
 
   struct timespec start_time_;
-  map<string, string> properties_;
+  std::map<string, string> properties_;
   vector<PinState> pins_; 
   istream *input_;
   ostream *output_; 

@@ -11,6 +11,8 @@
 extern "C"{
 #endif
 
+#define F_CPU 8000000UL
+
 #define HIGH 0x1
 #define LOW  0x0
 
@@ -81,6 +83,10 @@ extern "C"{
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
+#define clockCyclesPerMicrosecond() ( F_CPU / 1000000L )
+#define clockCyclesToMicroseconds(a) ( (a) / clockCyclesPerMicrosecond() )
+#define microsecondsToClockCycles(a) ( (a) * clockCyclesPerMicrosecond() )
+
 #ifdef __cplusplus
 }
 #endif
@@ -88,13 +94,13 @@ extern "C"{
 long random(long);
 long random(long, long);
 void randomSeed(unsigned long);
-//long map(long, long, long, long, long);
+long map(long, long, long, long, long);
 
 #include "Serial.h"
 
 void __check(const char *fmt...);
 
-// byte doesn't seem to be avialalbe on my host...
+// byte doesn't seem to be available on my host...
 typedef uint8_t byte;
 
 #endif
