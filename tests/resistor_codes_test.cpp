@@ -26,7 +26,7 @@ int test_getvalue(int pin, const PinState &state) {
 
 void test_setup() {
   cout << "TEST: test_setup()" << endl;
-  Arduino.set_istream(&input);
+  Emulator::instance()->set_istream(&input);
   input << "Bo\nr\nBa\n"; // 12 ohms
   input << "Bo\nr\nBo\n"; // 120 ohms
   input << "R\nBo\nR\n"; // 2.1k ohms 
@@ -52,7 +52,7 @@ void test_check(const std::string &what) {
   if (what.substr(0,6) != "micros") { 
     //std::cout << "TEST: trace: " << what << std::endl;
   }
-  if (Arduino.get_time() > 60000000) {
+  if (Emulator::instance()->get_time() > 60000000) {
     throw std::string("Simulator forced to exit after 60 seconds.");
   }
 }

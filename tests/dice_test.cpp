@@ -13,7 +13,7 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
 
 int test_getvalue(int pin, const PinState &state) {
   //cout << "TEST: test_getvalue(): " << pin << endl;
-  long ts = Arduino.get_time() % 1000000;
+  long ts = Emulator::instance()->get_time() % 1000000;
   if (ts > 100000 && ts < 200000) {
     return LOW;
   }else{
@@ -26,7 +26,7 @@ void test_setup(void) {
 }
 
 bool test_loop(int count) {
-  return (Arduino.get_time() < 10000000);
+  return (Emulator::instance()->get_time() < 10000000);
 }
 
 void test_exit(void) {
@@ -37,7 +37,7 @@ void test_check(const std::string &what) {
   // if (what.substr(0,6) != "micros") { 
   //   std::cout << "TEST: trace: " << what << std::endl;
   // }
-  if (Arduino.get_time() > 15000000) {
+  if (Emulator::instance()->get_time() > 15000000) {
     throw std::string("Simulator forced to exit after 15 seconds.");
   }
 }

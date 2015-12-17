@@ -21,9 +21,9 @@ void test_propchange(const string &prop, const string &value) {
 
 int test_getvalue(int pin, const PinState &state) {
   
-  float reflect = ((Arduino.get_pin(redPin).get_value() / 255.0) * 0.75 
-		  + (Arduino.get_pin(greenPin).get_value() / 255.0) * 0.50
-		  + (Arduino.get_pin(bluePin).get_value() / 255.0) * 0.25)
+  float reflect = ((Emulator::instance()->get_pin(redPin).get_value() / 255.0) * 0.75 
+		  + (Emulator::instance()->get_pin(greenPin).get_value() / 255.0) * 0.50
+		  + (Emulator::instance()->get_pin(bluePin).get_value() / 255.0) * 0.25)
     * 1023.0;
 
   if (reflect > 1023)

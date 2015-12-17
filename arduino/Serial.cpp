@@ -36,8 +36,8 @@ SerialEmulator::~SerialEmulator() {
 
 void SerialEmulator::begin(unsigned long baud, uint8_t params) {
   __check("Serial.begin(%d, $x)", baud, params);
-  Arduino.set_property("serial.baud", TO_STRING(baud));
-  Arduino.set_property("serial.params", TO_STRING((int) params));
+  Emulator::instance()->set_property("serial.baud", TO_STRING(baud));
+  Emulator::instance()->set_property("serial.params", TO_STRING((int) params));
   test_propchange("serial.baud", TO_STRING(baud));
   test_propchange("serial.params", TO_STRING((int) params));
 }
@@ -46,7 +46,7 @@ void SerialEmulator::end() {
 }
 
 int SerialEmulator::available() {
-  istream *input = Arduino.get_istream();
+  istream *input = Emulator::instance()->get_istream();
   int got = input->get();
   input->unget();
   input->clear();
@@ -62,7 +62,7 @@ int SerialEmulator::available() {
 }
 
 int SerialEmulator::peek() {
-  istream *input = Arduino.get_istream();
+  istream *input = Emulator::instance()->get_istream();
   int got = input->get();
   input->unget();
   input->clear();
@@ -78,7 +78,7 @@ int SerialEmulator::peek() {
 }
 
 int SerialEmulator::read() {
-  istream *input = Arduino.get_istream();
+  istream *input = Emulator::instance()->get_istream();
   int got = input->get();
   input->clear();
 
@@ -99,13 +99,13 @@ int SerialEmulator::availableForWrite() {
 
 void SerialEmulator::flush() {
   __check("Serial.flush()");
-  ostream *output = Arduino.get_ostream();
+  ostream *output = Emulator::instance()->get_ostream();
   output->flush();
 }
 
 size_t SerialEmulator::write(uint8_t c) {
   __check("Serial.write(%d)", c);
-  ostream *output = Arduino.get_ostream();
+  ostream *output = Emulator::instance()->get_ostream();
   output->put(c);
 }
 

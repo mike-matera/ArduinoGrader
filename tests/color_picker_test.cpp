@@ -32,7 +32,7 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
 }
 
 void test_setup() {
-  Arduino.set_istream(&input);
+  Emulator::instance()->set_istream(&input);
   input << "1 2 3" << endl; 
   input << "4 5 6" << endl; 
   input << "7 8 9" << endl; 
@@ -53,7 +53,7 @@ void test_exit() {
 }
 
 void test_check(const std::string &what) {
-  if (Arduino.get_time() > 5000000) {
+  if (Emulator::instance()->get_time() > 5000000) {
     throw std::string("Simulator forced to exit after 5 seconds.");
   }
 }

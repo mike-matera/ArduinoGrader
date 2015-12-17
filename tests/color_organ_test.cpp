@@ -71,7 +71,7 @@ void test_exit(void) {
 }
 
 void test_check(const std::string &what) {
-  if (Arduino.get_time() > 20000000) {
+  if (Emulator::instance()->get_time() > 20000000) {
     throw std::string("Simulator forced to exit after 20 seconds.");
   }
 }

@@ -100,7 +100,7 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
     return;
   if (next.get_mode() == PinMode::kSound) {
     note n; 
-    n.ts = Arduino.get_time() / 1000;
+    n.ts = Emulator::instance()->get_time() / 1000;
     n.tone = next.get_value();
     melody.push_back(n);
   }
@@ -115,7 +115,7 @@ void test_propchange(const string &prop, const string &value) {
 
 void test_setup(void) {
   cout << "TEST: test_setup()" << endl;
-  Arduino.set_istream(&input);
+  Emulator::instance()->set_istream(&input);
   input << "agfgaaa-ggg-aaa agfgaaaaggagf\n";
 }
 
@@ -132,7 +132,7 @@ void test_check(const std::string &what) {
   if (what.substr(0,6) != "micros") { 
     //std::cout << "TEST: trace: " << what << std::endl;
   }
-  if (Arduino.get_time() > 10000000) {
+  if (Emulator::instance()->get_time() > 10000000) {
     validate();
     throw std::string("Simulator forced to exit after 10 seconds.");
   }

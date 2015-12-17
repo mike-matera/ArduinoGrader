@@ -21,7 +21,7 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   if (pin != ledPin) 
     throw "Unexpected pin change!";
   
-  int time = Arduino.get_time();
+  int time = Emulator::instance()->get_time();
   if (prev.is_low() && next.is_high()) {
     cout << "low  time: " << ((time - last)/1000) << endl;
   }

@@ -73,7 +73,7 @@ int Stream::peekNextDigit()
 
 void Stream::setTimeout(unsigned long timeout)  // sets the maximum number of milliseconds to wait
 {
-  Arduino.set_property("stream.timeout", TO_STRING(timeout));
+  Emulator::instance()->set_property("stream.timeout", TO_STRING(timeout));
   test_propchange("stream.timeout", TO_STRING(timeout));
 
   _timeout = timeout;

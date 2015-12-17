@@ -23,11 +23,11 @@ extern "C" {
 #include "Arduino.h"
 #include "emulator.h"
 
+Emulator *Emulator::g_instance_; 
+
 using std::atomic_bool;
 using std::async;
 using std::future;
-
-Emulator Arduino; 
 
 static std::mutex state_mutex;
 
@@ -72,12 +72,13 @@ void test_propchange(const string &, const string &) __attribute__((weak, alias(
 int test_getvalue(int, const PinState &) __attribute__((weak, alias("__test_getvalue"))) ;
 
 void __check(const char *fmt...) {
+  // don't process this call during if cout is not ready.. this is fucked. 
   va_list args; 
   va_start(args, fmt);
   char buffer[256]; 
   vsnprintf(buffer, 256, fmt, args);
-  test_check(buffer);
   va_end(args);
+  test_check(buffer);
 }
 
 /* 
@@ -87,7 +88,7 @@ void __check(const char *fmt...) {
  * at least I can prevent early roll over in 32 bits.
  */
 unsigned long micros() {
-  unsigned long t = Arduino.get_time();
+  unsigned long t = Emulator::instance()->get_time();
   __check("micros() == %d", t);
   return t;
 }
@@ -111,31 +112,31 @@ void delay(unsigned long time) {
 
 static void __set_and_call(int pin, PinMode mode, int value) {
   LOCK();
-  PinState p = Arduino.get_pin(pin);
+  PinState p = Emulator::instance()->get_pin(pin);
   PinState o = p;
   p.set_mode(mode);
   p.set_value(value);
-  Arduino.set_pin(pin, p);
+  Emulator::instance()->set_pin(pin, p);
   UNLOCK();
   test_pinchange(pin, o, p);
 }
 
 static void __set_and_call(int pin, PinMode mode) {
   LOCK();
-  PinState p = Arduino.get_pin(pin);
+  PinState p = Emulator::instance()->get_pin(pin);
   PinState o = p;
   p.set_mode(mode);
-  Arduino.set_pin(pin, p);
+  Emulator::instance()->set_pin(pin, p);
   UNLOCK();
   test_pinchange(pin, o, p);
 }
 
 static void __set_and_call(int pin, int value) {
   LOCK();
-  PinState p = Arduino.get_pin(pin);
+  PinState p = Emulator::instance()->get_pin(pin);
   PinState o = p;
   p.set_value(value);
-  Arduino.set_pin(pin, p);
+  Emulator::instance()->set_pin(pin, p);
   UNLOCK();
   test_pinchange(pin, o, p);
 }
@@ -164,7 +165,7 @@ void digitalWrite(uint8_t pin, uint8_t value) {
 int digitalRead(uint8_t pin) {
   assert(pin < NUMPINS);
   LOCK();
-  PinState p = Arduino.get_pin(pin);
+  PinState p = Emulator::instance()->get_pin(pin);
   bool input = p.is_input();
   int value = p.get_value();
   UNLOCK();
@@ -180,7 +181,7 @@ int analogRead(uint8_t pin) {
   assert(pin < NUMANPINS);
   pin += A0;
   LOCK();
-  PinState p = Arduino.get_pin(pin);
+  PinState p = Emulator::instance()->get_pin(pin);
   bool input = p.is_analog();
   int value = p.get_value();
   UNLOCK();
@@ -194,7 +195,7 @@ int analogRead(uint8_t pin) {
 void analogReference(uint8_t mode) {
   __check("analogReference(%x)", mode);
   LOCK();
-  Arduino.set_property("analog.reference", TO_STRING(mode));
+  Emulator::instance()->set_property("analog.reference", TO_STRING(mode));
   UNLOCK();
   test_propchange("analog.reference", TO_STRING(mode));
 }
@@ -222,10 +223,10 @@ void tone(uint8_t pin, unsigned int frequency, unsigned long duration) {
 
   if (duration != 0) {
     // Set a thread to wait for the duration and turn off the tone...
-    unsigned long offtime = (Arduino.get_time()/1000) + duration;
+    unsigned long offtime = (Emulator::instance()->get_time()/1000) + duration;
     future_pending = true;
     tone_future = async(std::launch::async, [=] () {
-	while (future_pending && (Arduino.get_time()/1000) < offtime) {
+	while (future_pending && (Emulator::instance()->get_time()/1000) < offtime) {
 	  std::this_thread::yield();
 	}
 	if (! future_pending) {

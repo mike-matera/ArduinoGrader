@@ -25,12 +25,12 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
     }
   }
 
-  if (Arduino.get_pin(leftLed).is_high() && Arduino.get_pin(rightLed).is_low()) {
+  if (Emulator::instance()->get_pin(leftLed).is_high() && Emulator::instance()->get_pin(rightLed).is_low()) {
     cout << "Left" << endl;
     sawLeft = true;
   }
 
-  if (Arduino.get_pin(leftLed).is_low() && Arduino.get_pin(rightLed).is_high()) {
+  if (Emulator::instance()->get_pin(leftLed).is_low() && Emulator::instance()->get_pin(rightLed).is_high()) {
     cout << "Right" << endl;
     sawRight = true;
   }
@@ -52,10 +52,10 @@ void test_exit(void) {
 
 void test_check(const std::string &what) {
   if (what.substr(0,6) == "micros") { 
-    if (Arduino.get_pin(leftLed).is_low() && Arduino.get_pin(rightLed).is_low()) {
+    if (Emulator::instance()->get_pin(leftLed).is_low() && Emulator::instance()->get_pin(rightLed).is_low()) {
       throw std::string("Both LEDs are off during delay().");
     }
-    if (Arduino.get_pin(leftLed).is_high() && Arduino.get_pin(rightLed).is_high()) {
+    if (Emulator::instance()->get_pin(leftLed).is_high() && Emulator::instance()->get_pin(rightLed).is_high()) {
       throw std::string("Both LEDs are on during delay().");
     }
   }

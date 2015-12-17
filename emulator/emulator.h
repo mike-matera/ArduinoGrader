@@ -36,9 +36,11 @@ template <typename T> std::string to_string( const T& n ) {
 #endif
 
 class Emulator {
-  
-public:
-  
+
+private: 
+
+  // Singleton 
+  static Emulator *g_instance_; 
   Emulator() {
     input_ = NULL;
     output_ = NULL;
@@ -46,6 +48,16 @@ public:
     for (int i=0; i<NUMPINS; i++) {
       pins_.push_back(PinState());
     }
+  }
+
+public:
+
+  
+  static Emulator *instance() {
+    if (!g_instance_) {
+      g_instance_ = new Emulator();
+    }
+    return g_instance_;
   }
 
   ~Emulator() {
@@ -106,8 +118,6 @@ private:
   istream *input_;
   ostream *output_; 
 };
-
-extern Emulator Arduino; 
 
 void test_async(void);
 void test_setup(void);

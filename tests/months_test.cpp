@@ -21,12 +21,12 @@ void test_propchange(const string &prop, const string &value) {
 
 void test_setup() {
   cout << "TEST: test_setup()" << endl;
-  Arduino.set_istream(&input);
+  Emulator::instance()->set_istream(&input);
   input << "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12";
 }
 
 bool test_loop(int count) {
-  return (count < 12 && Arduino.get_time() < 2000000);
+  return (count < 12 && Emulator::instance()->get_time() < 2000000);
 }
 
 void test_exit(void) {
@@ -34,7 +34,7 @@ void test_exit(void) {
 }
 
 void test_check(const std::string &what) {
-  if (Arduino.get_time() > 5000000) {
+  if (Emulator::instance()->get_time() > 5000000) {
     throw std::string("Simulator forced to exit after 5 seconds.");
   }
 }

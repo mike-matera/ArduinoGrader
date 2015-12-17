@@ -27,21 +27,21 @@ void test_async() {
   // We don't know what to do with line endings
   // until after setup is run...
   while (! start_input) 
-    Arduino.busy_wait(10);
+    Emulator::instance()->busy_wait(10);
 
   input << 200;
   if (use_lf)
     input << endl;
 
   while (!saw_400) 
-    Arduino.busy_wait(10);
+    Emulator::instance()->busy_wait(10);
 
   input << 300; 
   if (use_lf) 
     input << endl;
 
   while (!saw_600) 
-    Arduino.busy_wait(10);
+    Emulator::instance()->busy_wait(10);
 
   input << 400;
   if (use_lf) 
@@ -69,7 +69,7 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
   }
 
   if (pin == ledPin && prev.get_value() == HIGH && next.get_value() == LOW) {
-    int t = Arduino.get_time() / 1000;
+    int t = Emulator::instance()->get_time() / 1000;
     int p = t - lastTime;
     cout << "Blink period: " << (t - lastTime) << endl;
     if (p == 400) {
@@ -86,7 +86,7 @@ void test_pinchange(int pin, const PinState &prev, const PinState &next) {
 
 void test_setup() {
   cout << "TEST: test_setup()" << endl;
-  Arduino.set_istream(&input);
+  Emulator::instance()->set_istream(&input);
 }
 
 bool test_loop(int count) {
@@ -103,7 +103,7 @@ void test_exit(void) {
 }
 
 void test_check(const std::string &what) {
-  if (Arduino.get_time() > 10000000) {
+  if (Emulator::instance()->get_time() > 10000000) {
     saw_400 = saw_600 = saw_800 = true;
     throw std::string("Simulator forced to exit after 10 seconds.");
   }
