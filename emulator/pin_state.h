@@ -7,11 +7,21 @@
 
 #include "Arduino.h"
 
+using std::vector; 
+using std::function; 
+
+class PinState; 
+
 enum PinMode {
   kOutput, kInput, kPullup, kPWM, kSound, kAnalog
 };
 
+typedef function<void(PinState&, PinMode, PinMode)> mode_handler;
+typedef function<void(PinState&, int, int)> value_handler;
+typedef function<int(PinState&)> value_producer;
+
 class PinState {
+  friend class Emulator; 
 
 public:
 
@@ -21,10 +31,14 @@ public:
   }
 
   void set_mode(PinMode m) {
+    if (mh_) 
+      mh_(*this, mode_, m);
     mode_ = m;
   }
 
   void set_value(int v) {
+    if (vh_) 
+      vh_(*this, value_, v);
     value_ = v;
   }
 
@@ -32,7 +46,9 @@ public:
     return mode_; 
   }
 
-  int get_value() const {
+  int get_value() {
+    if (vp_) 
+      return vp_(*this);
     return value_; 
   }
 
@@ -68,6 +84,9 @@ private:
   PinMode mode_; 
   int value_; 
 
+  mode_handler mh_; 
+  value_handler vh_; 
+  value_producer vp_;
 };
 
 std::ostream & operator<<(std::ostream &os, const PinState & me);

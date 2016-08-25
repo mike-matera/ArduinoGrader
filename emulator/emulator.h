@@ -20,27 +20,21 @@ using std::endl;
 using std::cout; 
 using std::istream; 
 using std::ostream; 
+using std::reference_wrapper; 
 
-#ifdef __CYGWIN__
-#include <sstream>
-namespace fix_cygwin {
-template <typename T> std::string to_string( const T& n ) {
-  std::ostringstream os;
-  os << n;
-  return os.str();
-}
-}
-#define TO_STRING(v) fix_cygwin::to_string(v)
-#else
-#define TO_STRING(v) std::to_string(v)
-#endif
+typedef vector<reference_wrapper<PinState> > registration; 
 
 class Emulator {
 
-private: 
+public:
 
-  // Singleton 
-  static Emulator *g_instance_; 
+  enum Change {
+    kType  = 1, 
+    kValue = 2, 
+    kRead  = 4,
+    kProp  = 8,
+  };
+
   Emulator() {
     input_ = NULL;
     output_ = NULL;
@@ -50,16 +44,6 @@ private:
     }
   }
 
-public:
-
-  
-  static Emulator *instance() {
-    if (!g_instance_) {
-      g_instance_ = new Emulator();
-    }
-    return g_instance_;
-  }
-
   ~Emulator() {
     cout << "Emulator exiting. Properties list:" << endl;
     for (std::map<string,string>::iterator it = properties_.begin(); it != properties_.end(); it++) {
@@ -67,47 +51,27 @@ public:
     }
   }
 
-  PinState get_pin(int num);
-  void set_pin(int num, PinState &p);
+  PinState& operator[] (std::size_t i) {
+    return pins_[i];
+  }
+
   const std::map<string, string> get_properties();
   void set_property(const string &key, const string &val);
+  unsigned long get_time() const;
+  istream *get_istream();
+  ostream *get_ostream();
+  void set_istream(istream *s);
+  void set_ostream(ostream *s);
+  void busy_wait(unsigned long usec);
 
-  unsigned long get_time() const {
-    struct timespec time; 
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    time.tv_sec = time.tv_sec - start_time_.tv_sec; 
-    time.tv_nsec = time.tv_nsec - start_time_.tv_nsec;
-    return (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
-  }
-
-  istream *get_istream() {
-    if (input_ == NULL) 
-      return &std::cin;
-    else
-      return input_;
-  }
-
-  ostream *get_ostream() {
-    if (output_ == NULL) 
-      return &std::cout;
-    else
-      return output_;
-  }
-
-  void set_istream(istream *s) {
-    input_ = s; 
-  }
-
-  void set_ostream(ostream *s) {
-    output_ = s; 
-  }
-
-  void busy_wait(int usec) {
-    int start = get_time();
-    int wait = usec * 1000;
-    while (get_time() < (start + wait)) {
-      std::this_thread::yield();
+  // Test interface 
+  registration reg_callback(vector<int> pins, mode_handler mh, value_handler vh, value_producer vp) {
+    registration r; 
+    for (auto &p : pins) {
+      pins_[p].mh_ = mh;
+      r.push_back(pins_[p]);
     }
+    return r;
   }
 
 private:
@@ -119,13 +83,8 @@ private:
   ostream *output_; 
 };
 
-void test_async(void);
-void test_setup(void);
-bool test_loop(int);
-void test_exit(void);
-void test_check(const std::string &);
-void test_pinchange(int, const PinState &, const PinState &);
-void test_propchange(const string &, const string &);
-int test_getvalue(int, const PinState &);
+extern Emulator emu; 
+
+void __check(const char *fmt...);
 
 #endif

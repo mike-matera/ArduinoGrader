@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PATH=/opt/arduino-1.6.5:$PATH
+PATH=/opt/arduino:$PATH
 arduino=arduino
 
 # null globbing... breaks my search for related source

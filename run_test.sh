@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-arduino=arduino
+arduino=/opt/arduino/arduino
 if [ -n "$WINDIR" ]; then
     arduino='/cygdrive/c/Program Files (x86)/Arduino/arduino_debug.exe'
 fi
@@ -38,6 +38,7 @@ fi
 
 mkdir -p $tempdir/$sketchdir/build
 (
+    echo "Working in: $tempdir"
     set -e
     cp $1 $tempdir/$sketchdir
 
@@ -50,7 +51,7 @@ mkdir -p $tempdir/$sketchdir/build
         tempbuild=$tempdir/build
     fi
     "$arduino" --verify --preserve-temp-files --pref build.path=$tempbuild $tempsketch 
-    cp $tempdir/build/${sketchdir}.cpp $tempdir
+    cp $tempdir/build/sketch/${sketchdir}.ino.cpp $tempdir/${sketchdir}.cpp
     cp emulator.make emulator/* arduino/* $tempdir
     cp $2 $tempdir 
     make -j $ncpus -f emulator.make -C $tempdir all 

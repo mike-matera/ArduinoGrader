@@ -1,5 +1,5 @@
-CXXFLAGS = -std=gnu++11 -g -pthread -I.
-CFLAGS = -I.
+CXXFLAGS = -std=gnu++11 -g -pthread -I. -Wall
+CFLAGS = -I. -Wall
 LDFLAGS = -lpthread 
 
 C_FILES += $(wildcard *.c)

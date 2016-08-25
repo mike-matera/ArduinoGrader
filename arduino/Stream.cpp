@@ -73,9 +73,7 @@ int Stream::peekNextDigit()
 
 void Stream::setTimeout(unsigned long timeout)  // sets the maximum number of milliseconds to wait
 {
-  Emulator::instance()->set_property("stream.timeout", TO_STRING(timeout));
-  test_propchange("stream.timeout", TO_STRING(timeout));
-
+  emu.set_property("stream.timeout", std::to_string(timeout));
   _timeout = timeout;
 }
 
