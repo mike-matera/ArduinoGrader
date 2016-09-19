@@ -51,6 +51,7 @@ mkdir -p $tempdir/$sketchdir/build
         tempbuild=$tempdir/build
     fi
     "$arduino" --verify --preserve-temp-files --pref build.path=$tempbuild $tempsketch 
+    echo "Arduino compile succeeded."
     cp $tempdir/build/sketch/${sketchdir}.ino.cpp $tempdir/${sketchdir}.cpp
     cp emulator.make emulator/* arduino/* $tempdir
     cp $2 $tempdir 

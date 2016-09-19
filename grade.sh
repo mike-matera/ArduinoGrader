@@ -86,7 +86,7 @@ mkdir -p "$tempdir/$sketchdir/build"
         tempbuild="$tempdir/build"
     fi
     "$arduino" --verify --preserve-temp-files --pref build.path="$tempbuild" "$tempsketch"
-    cp "$tempdir/build/${sketchdir}.cpp" "$tempdir"
+    cp "$tempdir/build/sketch/${sketchdir}.ino.cpp" "$tempdir/${sketchdir}.cpp"
     # copy extra sources
     for ext in ${extrasrc[@]}; do 
 	cp "$tempdir/build/$ext" "$tempdir"

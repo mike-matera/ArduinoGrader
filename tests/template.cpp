@@ -6,23 +6,32 @@ using std::cout;
 using std::endl;
 using std::string; 
 
-void test_async() {
-  cout << "TEST: test_async()" << endl;
-}
+class LEDs : public PinHandler { 
+public: 
 
-void test_pinchange(int pin, const PinState &prev, const PinState &next) {
-  if (prev == next)
-    return;
-  cout << "TEST: test_pinchange(): pin: " << pin << " " << next << endl;
-}
+  LEDs() {
+  }
 
-void test_propchange(const string &prop, const string &value) {
-  cout << "TEST: test_propchange(): " << prop << " = " << value << endl;
-}
+  int getLEDNumber() {
+    int rval = 0; 
+    for (PinState p : reg_) {
+      if (p.is_enabled() && p.is_high()) {
+	rval |= 1;
+      }
+      rval = rval << 1; 
+    }
+    return rval;
+  }
 
-int test_getvalue(int pin, const PinState &state) {
-  cout << "TEST: test_getvalue(): " << pin << endl;
-  return 0;
+} BoardLEDs;
+
+void test_start(void) {
+  cout << "TEST: test_start()" << endl;
+  registration r = emu.reg_callback({2, 4, 7, 8}, BoardLEDs);
+  r[0].get().set_name("LED[0]");
+  r[1].get().set_name("LED[1]");
+  r[2].get().set_name("LED[2]");
+  r[3].get().set_name("LED[3]");
 }
 
 void test_setup(void) {
@@ -31,6 +40,7 @@ void test_setup(void) {
 
 bool test_loop(int count) {
   cout << "TEST: loop()" << endl;
+  cout << "LEDs are reading: " << BoardLEDs.getLEDNumber() << endl;
   return (count < 1);
 }
 

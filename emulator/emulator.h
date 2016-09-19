@@ -22,8 +22,6 @@ using std::istream;
 using std::ostream; 
 using std::reference_wrapper; 
 
-typedef vector<reference_wrapper<PinState> > registration; 
-
 class Emulator {
 
 public:
@@ -65,12 +63,13 @@ public:
   void busy_wait(unsigned long usec);
 
   // Test interface 
-  registration reg_callback(vector<int> pins, mode_handler mh, value_handler vh, value_producer vp) {
+  registration reg_callback(vector<int> pins, PinHandler &h) {
     registration r; 
     for (auto &p : pins) {
-      pins_[p].mh_ = mh;
+      pins_[p].handler_ = &h;
       r.push_back(pins_[p]);
     }
+    h.reg_ = r;
     return r;
   }
 

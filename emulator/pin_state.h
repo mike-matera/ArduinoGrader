@@ -3,22 +3,44 @@
 
 #include <functional>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "Arduino.h"
 
 using std::vector; 
+using std::string; 
 using std::function; 
+using std::reference_wrapper; 
 
 class PinState; 
+
+typedef vector<reference_wrapper<PinState> > registration; 
 
 enum PinMode {
   kOutput, kInput, kPullup, kPWM, kSound, kAnalog
 };
 
-typedef function<void(PinState&, PinMode, PinMode)> mode_handler;
-typedef function<void(PinState&, int, int)> value_handler;
-typedef function<int(PinState&)> value_producer;
+class PinHandler {
+  friend class Emulator; 
+
+public:
+
+  PinHandler() {
+  }
+
+  virtual ~PinHandler() {
+  }
+
+  virtual void onModeChange(PinState& pin, PinMode prev, PinMode next) {} 
+  virtual void onValueChange(PinState& pin, int prev, int next) {}
+  virtual int onValueNeeded(PinState& pin) {return 0;}
+
+protected:
+
+  registration reg_; 
+
+};
 
 class PinState {
   friend class Emulator; 
@@ -28,17 +50,19 @@ public:
   PinState() {
     mode_ = PinMode::kInput; 
     value_ = 0; 
+    handler_ = NULL; 
+    name_ = "";
   }
 
   void set_mode(PinMode m) {
-    if (mh_) 
-      mh_(*this, mode_, m);
+    if (handler_ != NULL) 
+      handler_->onModeChange(*this, mode_, m);
     mode_ = m;
   }
 
   void set_value(int v) {
-    if (vh_) 
-      vh_(*this, value_, v);
+    if (handler_ != NULL)
+      handler_->onValueChange(*this, value_, v);
     value_ = v;
   }
 
@@ -47,9 +71,17 @@ public:
   }
 
   int get_value() {
-    if (vp_) 
-      return vp_(*this);
+    if (handler_ != NULL) 
+      return handler_->onValueNeeded(*this);
     return value_; 
+  }
+
+  void set_name(const string &n) {
+    name_ = n; 
+  }
+
+  const string &get_name() const {
+    return name_; 
   }
 
   bool is_enabled() const {
@@ -83,10 +115,8 @@ private:
 
   PinMode mode_; 
   int value_; 
-
-  mode_handler mh_; 
-  value_handler vh_; 
-  value_producer vp_;
+  PinHandler *handler_;
+  string name_;
 };
 
 std::ostream & operator<<(std::ostream &os, const PinState & me);
