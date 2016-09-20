@@ -18,16 +18,28 @@ using std::future;
 
 static future<void> tone_future; 
 static atomic_bool future_pending;
+struct timespec start_time;
+
+unsigned long get_time() {
+  if (start_time.tv_sec == 0 && start_time.tv_nsec == 0) {
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+  }
+
+  struct timespec time; 
+  clock_gettime(CLOCK_MONOTONIC, &time);
+  time.tv_sec = time.tv_sec - start_time.tv_sec; 
+  time.tv_nsec = time.tv_nsec - start_time.tv_nsec;
+  return (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
+}
 
 void pinMode(uint8_t pin, uint8_t mode) {
-  __check("pinMode(%d, %x)", pin, mode);
   assert(pin < NUMPINS);
   if (mode == INPUT) {
-    emu[pin].set_mode(PinMode::kInput);
+    emu_set_pinmode(pin, PinMode::kInput);
   }else if (mode == OUTPUT) {
-    emu[pin].set_mode(PinMode::kOutput);
+    emu_set_pinmode(pin, PinMode::kOutput);
   }else if (mode == INPUT_PULLUP) {
-    emu[pin].set_mode(PinMode::kPullup);
+    emu_set_pinmode(pin, PinMode::kPullup);
   }else{
     cout << "INVALID PIN MODE" << endl;
     assert(false);
@@ -35,16 +47,14 @@ void pinMode(uint8_t pin, uint8_t mode) {
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
-  __check("digitalWrite(%d, %x)", pin, value);
   assert(pin < NUMPINS);
   assert(value == HIGH || value == LOW);
-  emu[pin].set_value(value);
+  emu_set_pinvalue(pin, value);
 }
 
 int digitalRead(uint8_t pin) {
   assert(pin < NUMPINS);
-  int value = emu[pin].get_value();
-  __check("digitalRead(%d) == %x", pin, value);
+  int value = emu_get_pinvalue(pin);
   return value;
 }
 
@@ -52,29 +62,25 @@ int digitalRead(uint8_t pin) {
 int analogRead(uint8_t pin) {
   assert(pin < NUMANPINS);
   pin += A0;
-  int value = emu[pin].get_value();
-  __check("analogRead(%d) == %d", pin, value);
+  int value = emu_get_pinvalue(pin);
   return value;
 }
 
 void analogReference(uint8_t mode) {
-  __check("analogReference(%x)", mode);
-  emu.set_property("analog.reference", std::to_string(mode));
+  emu_set_property("analog.reference", std::to_string(mode));
 }
 
 void analogWrite(uint8_t pin, int val) {
-  __check("analogWrite(%d, %d)", pin, val);
   assert(pin < NUMPINS);
   val &= 0xff;
-  emu[pin].set_mode(PinMode::kPWM);
-  emu[pin].set_value(val);
+  emu_set_pinmode(pin, PinMode::kPWM);
+  emu_set_pinvalue(pin, val);
 }
 
 void tone(uint8_t pin, unsigned int frequency, unsigned long duration) {
-  __check("tone(%d, %d, %d)", pin, frequency, duration);
   assert(pin < NUMPINS);
 
-  emu[pin].set_mode(PinMode::kSound);
+  emu_set_pinmode(pin, PinMode::kSound);
 
   // If there's a thread waiting it must be canceled before we set a 
   // new tone...
@@ -85,33 +91,32 @@ void tone(uint8_t pin, unsigned int frequency, unsigned long duration) {
 
   if (duration != 0) {
     // Set a thread to wait for the duration and turn off the tone...
-    unsigned long offtime = (emu.get_time()/1000) + duration;
+    unsigned long offtime = (get_time()/1000) + duration;
     future_pending = true;
     tone_future = async(std::launch::async, [=] () {
-	while (future_pending && (emu.get_time()/1000) < offtime) {
+	while (future_pending && (get_time()/1000) < offtime) {
 	  std::this_thread::yield();
 	}
 	if (! future_pending) {
 	  return;
 	}
 
-	emu[pin].set_value(0);	
+	emu_set_pinvalue(pin, 0);
 
 	future_pending = false;
       });
   }
 
-  emu[pin].set_value(frequency);
+  emu_set_pinvalue(pin, frequency);
 }
 
 void noTone(uint8_t pin) {
-  __check("noTone(%d)", pin);
   if (future_pending) {
     future_pending = false;
     tone_future.wait();
   }
-  emu[pin].set_mode(PinMode::kSound);
-  emu[pin].set_value(0);
+  emu_set_pinmode(pin, PinMode::kSound);
+  emu_set_pinvalue(pin, 0);
 }
 
 void randomSeed(unsigned long seed)
@@ -150,8 +155,7 @@ long map(long x, long in_min, long in_max, long out_min, long out_max)
  * at least I can prevent early roll over in 32 bits.
  */
 unsigned long micros() {
-  unsigned long t = emu.get_time();
-  __check("micros() == %d", t);
+  unsigned long t = get_time();
   return t;
 }
 
@@ -169,4 +173,12 @@ void delayMicroseconds(unsigned int time) {
 
 void delay(unsigned long time) {
   delayMicroseconds(time * 1000);
+}
+
+void busy_wait(unsigned long usec) {
+  unsigned long start = get_time();
+  unsigned long wait = usec * 1000;
+  while (get_time() < (start + wait)) {
+    std::this_thread::yield();
+  }
 }

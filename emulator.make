@@ -1,6 +1,6 @@
-CXXFLAGS = -std=gnu++11 -g -pthread -I. -Wall
-CFLAGS = -I. -Wall
-LDFLAGS = -lpthread 
+CXXFLAGS = -std=gnu++11 -g -pthread -I. -I/usr/include/python3.4 -Wall
+CFLAGS = -I. -I/usr/include/python3.4 -Wall
+LDFLAGS = -lpthread -lpython3.4m
 
 C_FILES += $(wildcard *.c)
 CPP_FILES += $(wildcard *.cpp)

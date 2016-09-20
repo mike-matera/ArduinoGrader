@@ -32,8 +32,6 @@ Servo::Servo()
   }
   else
     this->servoIndex = INVALID_SERVO ;  // too many servos
-
-  //__check("Servo::Servo(): number: %d", this->servoIndex);
 }
 
 // attach the given pin to the next free channel, sets pinMode, returns channel number or 0 if failure
@@ -60,7 +58,6 @@ uint8_t Servo::attach(int pin, int min, int max)
     */
     servos[this->servoIndex].Pin.isActive = true;  // this must be set after the check for isTimerActive
   }
-  __check("Servo::attach(%d, %d, %d) == %d", pin, min, max, this->servoIndex);
   return this->servoIndex ;
 }
 
@@ -74,12 +71,10 @@ void Servo::detach()
     finISR(timer);
   }
   */
-  __check("Servo::detach() [this->servoIndex == %d]", this->servoIndex);
 }
 
 void Servo::write(int value)
 {
-  __check("Servo::write(%d)", value);
   if(value < MIN_PULSE_WIDTH)
   {  // treat values less than 544 as angles in degrees (valid values in microseconds are handled as microseconds)
     if(value < 0) value = 0;
@@ -110,7 +105,6 @@ void Servo::writeMicroseconds(int value)
     */
 
     servos[channel].ticks = value;
-    //__check("Servo::writeMicroseconds(...) [ticks == %d]", value);
   }
 }
 
@@ -118,7 +112,6 @@ void Servo::writeMicroseconds(int value)
 int Servo::read()
 {
   int value = map( this->readMicroseconds()+1, SERVO_MIN(), SERVO_MAX(), 0, 180);
-  __check("Servo::read() [vlaue == %d]", value);
   return value;
 }
 
@@ -131,7 +124,6 @@ int Servo::readMicroseconds()
   else
     pulsewidth  = 0;
 
-  //__check("Servo::readMicroseconds() == %d]", pulsewidth);
   return pulsewidth;
 }
 
@@ -139,6 +131,5 @@ int Servo::readMicroseconds()
 bool Servo::attached()
 {
   bool ia = servos[this->servoIndex].Pin.isActive;
-  __check("Servo::attached() == %d", ia);
   return ia;
 }

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "emulator.h"
+/*
 #include "freq.h" 
 
 using std::cout; 
@@ -39,3 +40,4 @@ void test_check(const std::string &what) {
     throw std::string("Simulator forced to exit after 5 seconds.");
   }
 }
+*/

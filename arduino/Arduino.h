@@ -98,8 +98,6 @@ long map(long, long, long, long, long);
 
 #include "Serial.h"
 
-void __check(const char *fmt...);
-
 // byte doesn't seem to be available on my host...
 typedef uint8_t byte;
 

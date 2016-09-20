@@ -1,12 +1,14 @@
 
-#include <fcntl.h>
-#include <stdio.h>
-
 #include "emulator.h"
 #include "Serial.h" 
 
 #include <iostream>
 #include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+
+using std::cin; 
 
 SerialEmulator::SerialEmulator()  {
   // We must make STDIN non-blocking to emulate the behavior of Arduino.
@@ -35,19 +37,17 @@ SerialEmulator::~SerialEmulator() {
 }
 
 void SerialEmulator::begin(unsigned long baud, uint8_t params) {
-  __check("Serial.begin(%d, $x)", baud, params);
-  emu.set_property("serial.baud", std::to_string(baud));
-  emu.set_property("serial.params", std::to_string((int) params));
+  emu_set_property("serial.baud", std::to_string(baud));
+  emu_set_property("serial.params", std::to_string((int) params));
 }
 
 void SerialEmulator::end() {
 }
 
 int SerialEmulator::available() {
-  istream *input = emu.get_istream();
-  int got = input->get();
-  input->unget();
-  input->clear();
+  int got = cin.get();
+  cin.unget();
+  cin.clear();
 
   int rval;
   if (got == EOF)
@@ -55,15 +55,13 @@ int SerialEmulator::available() {
   else
     rval = 1;
   
-  __check("Serial.available() == %d", rval); 	  
   return rval;
 }
 
 int SerialEmulator::peek() {
-  istream *input = emu.get_istream();
-  int got = input->get();
-  input->unget();
-  input->clear();
+  int got = cin.get();
+  cin.unget();
+  cin.clear();
 
   int rval;
   if (got == EOF) 
@@ -71,14 +69,12 @@ int SerialEmulator::peek() {
   else
     rval = got;
 
-  __check("Serial.peek() == %d", rval); 	  
   return rval;
 }
 
 int SerialEmulator::read() {
-  istream *input = emu.get_istream();
-  int got = input->get();
-  input->clear();
+  int got = cin.get();
+  cin.clear();
 
   int rval;
   if (got == EOF)
@@ -86,25 +82,19 @@ int SerialEmulator::read() {
   else
     rval = got;
   
-  __check("Serial.read() == %d", rval);
   return rval;
 }
 
 int SerialEmulator::availableForWrite() {
-  __check("Serial.availableForWrite() == %d", 1);
   return 1;
 }
 
 void SerialEmulator::flush() {
-  __check("Serial.flush()");
-  ostream *output = emu.get_ostream();
-  output->flush();
+  cout.flush();
 }
 
 size_t SerialEmulator::write(uint8_t c) {
-  __check("Serial.write(%d)", c);
-  ostream *output = emu.get_ostream();
-  output->put(c);
+  cout.put(c);
   return 1;
 }
 

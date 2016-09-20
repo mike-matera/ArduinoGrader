@@ -27,6 +27,8 @@
 
 #include "emulator.h"
 
+using namespace std; 
+
 #define PARSE_TIMEOUT 1000  // default number of milli-seconds to wait
 #define NO_SKIP_CHAR  1  // a magic char not found in a valid ASCII numeric field
 
@@ -73,7 +75,7 @@ int Stream::peekNextDigit()
 
 void Stream::setTimeout(unsigned long timeout)  // sets the maximum number of milliseconds to wait
 {
-  emu.set_property("stream.timeout", std::to_string(timeout));
+  emu_set_property("stream.timeout", std::to_string(timeout));
   _timeout = timeout;
 }
 
