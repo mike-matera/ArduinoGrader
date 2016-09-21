@@ -154,10 +154,17 @@ int main(int argc, char *argv[])
   __test = PyObject_GetAttrString(test_mod, "test_run");
 
   if (__test && PyCallable_Check(__test)) {
-    PyObject *rval = PyObject_CallObject(__test, NULL);
+    PyObject *args = PyTuple_New(argc-2); 
+    for (int i=2; i<argc; i++) {
+      PyObject *str = PyUnicode_FromString(argv[i]); 
+      PyTuple_SetItem(args, i-2, str);
+      //Py_DECREF(str);
+    }
+    PyObject *rval = PyObject_CallObject(__test, args);
     PyErr_Print();
     PyErr_Clear();
     Py_XDECREF(rval);
+    Py_XDECREF(args);
   }
   PyErr_Print();
 
