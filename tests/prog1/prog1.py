@@ -14,15 +14,3 @@ def test_run() :
     if counter.get_high() == 200 and counter.get_low() == 400 :
         print ("frequency OK")
 
-# Expect entry point 
-def test_expect(test) :
-    try:
-        test.expect('.*200')
-        test.expect('.*400')
-        test.expect('.*frequency OK')
-    except Exception as e: 
-        print (str(e))
-        return False 
-
-    return True
-

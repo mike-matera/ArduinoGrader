@@ -12,12 +12,16 @@ import itertools
 import pexpect 
 import importlib 
 
-def build (program, test) :
+tempdir = tempfile.TemporaryDirectory()
+
+# XXX: This should be configurable. 
+testdir = '/home/maximus/Arduino/ArduinoGrader/tests'
+
+def build (program) :
     arduino = "/opt/arduino/arduino"
     sketchbase = os.path.basename(program)
     sketchdir = sketchbase.replace('.ino', '')
 
-    tempdir = tempfile.TemporaryDirectory()
     ncpus = multiprocessing.cpu_count()
 
     os.makedirs(tempdir.name + "/" + sketchdir + "/build")
@@ -41,29 +45,56 @@ def build (program, test) :
 
     print ("\n*** Native compile succeeded. ***\n")
 
-    cmd = [tempdir.name + '/test', 'tests.' + test]
-    #subprocess.check_call(cmd)
-    child = pexpect.spawnu(' '.join(cmd))
-    child.logfile = sys.stdout
-    return child
+    return tempdir.name + '/test'
 
-if len(sys.argv) != 3 :
-    print ("usage:", sys.argv[0], "<program.ino> <test>")
+if len(sys.argv) != 2 :
+    print ("usage:", sys.argv[0], "<program.ino>")
     exit (1)
 
 if not os.path.isfile(sys.argv[1]) :
     print ("Sketch doesn't exist:", sys.argv[1])
     exit (2)
 
-if not os.path.isfile('tests/' + sys.argv[2] + '.py') :
-    print ("Test doesn't exist:", 'tests/' + sys.argv[2] + '.py');
-    exit (2)
+def findtests() :
+    tests = []
+    print ("Searching for test modules...")
+    for e in os.listdir(testdir) : 
+        d = os.path.join(testdir,e)
+        if os.path.isdir(d) : 
+            f = os.path.join(d, '__init__.py')
+            if os.path.isfile(f) :
+                ns = importlib.import_module("tests." + e)
+                print ("\t", ns.name)
+                tests.append(ns)
+    return tests
 
-os.environ['PYTHONPATH'] = os.getcwd()
-testmod = importlib.__import__("tests." + sys.argv[2], fromlist=['test_expect'])
-test = build(sys.argv[1], sys.argv[2])
-if testmod.test_expect(test) :
-    print ('\n*** Test passed. ***')
+os.environ['PYTHONPATH'] = os.getcwd()    
+#os.environ['PYTHONPATH'] = testdir
+tests = findtests()
+testexe = None
+
+allpass = True
+testcount = 0
+
+for test in tests : 
+    for pattern in test.patterns :
+        m = re.search(pattern[0], sys.argv[1])
+        if m is not None :
+            if testexe == None :
+                testexe = build(sys.argv[1])
+            print ("Executing", test.name, "/", pattern[2])
+            testcount += 1
+            if pattern[1](testexe) :
+                print (" *** PASSED *** ")
+            else:
+                print (" *** FAILED *** ")
+                allpass = False
+
+if testcount > 0 :
+    if allpass :
+        print (" *** All tests PASSED **** ")
+    else:
+        print (" *** Some tests FAILED *** ")
 else:
-    print ('\n*** Test failed. ***')
+    print (" *** No tests run *** ")
 
