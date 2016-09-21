@@ -11,6 +11,7 @@
 
 #include <string>
 #include <map>
+#include <csignal>
 
 extern "C" {
 #include "stdlib.h"
@@ -98,7 +99,7 @@ PinMode emu_get_pinmode(int pin) {
 	});	  
   int rval = PyLong_AsLong(mode);
   Py_DECREF(mode);
-  return kPullup;
+  return static_cast<PinMode>(rval);
 }
 
 int emu_get_pinvalue(int pin) {
@@ -115,6 +116,12 @@ int emu_get_pinvalue(int pin) {
     backtrace_symbols_fd(_sf, backtrace(_sf, 100), fileno(stdout));	\
   }
 
+void signal_handler(int num) {
+  cout << "Caught a signal: " << num << endl;
+  STACKTRACE();
+  exit(num);
+}
+
 int main(int argc, char *argv[])
 {
   PyObject *name, *test_mod, *emu_mod;
@@ -124,21 +131,28 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  signal(SIGSEGV, signal_handler);
+
   PyImport_AppendInittab("sketch", &PyInit_Sketch);
   Py_Initialize();
+
   name = PyUnicode_FromString(argv[1]);
   test_mod = PyImport_Import(name);
   Py_DECREF(name);
+  if (PyErr_Occurred() != NULL) {
+    cout << "Error while importing test module." << endl;
+    PyErr_Print();
+    exit(-1);
+  }
 
   // Make a reference to the emulator class instance
-  name = PyUnicode_FromString("pytest.emu");
+  name = PyUnicode_FromString("emu.emulator");
   emu_mod = PyImport_Import(name);
   __emu = PyObject_GetAttrString(emu_mod, "emu");
   Py_DECREF(name);
   
-  // Retreive the emulator functions.
   __test = PyObject_GetAttrString(test_mod, "test_run");
-  PyErr_Clear();
+
   if (__test && PyCallable_Check(__test)) {
     PyObject *rval = PyObject_CallObject(__test, NULL);
     PyErr_Print();
@@ -146,7 +160,7 @@ int main(int argc, char *argv[])
     Py_XDECREF(rval);
   }
   PyErr_Print();
-    
+
   Py_XDECREF(__test);
   Py_XDECREF(__emu);
   

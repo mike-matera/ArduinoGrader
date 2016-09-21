@@ -13,7 +13,12 @@ using std::cout;
 #define NUMANPINS  8
 
 enum PinMode {
-  kOutput, kInput, kPullup, kPWM, kSound, kAnalog
+  kOutput   = 0, 
+  kInput    = 1, 
+  kPullup   = 2, 
+  kPWM      = 3, 
+  kSound    = 4, 
+  kAnalog   = 5
 };
 
 // Emulator Properties
