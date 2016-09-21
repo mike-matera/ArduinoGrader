@@ -23,10 +23,13 @@ def build (program) :
     sketchbase = os.path.basename(program)
     sketchdir = sketchbase.replace('.ino', '')
 
+    # Fix the common .ino.ino problem 
+    sketchbase = sketchbase.replace('.ino.ino', '.ino')
+
     ncpus = multiprocessing.cpu_count()
 
     os.makedirs(tempdir.name + "/" + sketchdir + "/build")
-    shutil.copy(program, tempdir.name + "/" + sketchdir)
+    shutil.copy(program, tempdir.name + "/" + sketchdir + "/" + sketchbase)
 
     tempsketch = tempdir.name + "/" + sketchdir + "/" + sketchbase
     tempbuild = tempdir.name + "/build"
