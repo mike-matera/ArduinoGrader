@@ -15,7 +15,8 @@ import importlib
 tempdir = tempfile.TemporaryDirectory()
 
 # XXX: This should be configurable. 
-testdir = '/home/maximus/Arduino/ArduinoGrader/tests'
+installdir = '/home/maximus/Arduino/ArduinoGrader'
+testdir = installdir + '/tests'
 
 def build (program) :
     arduino = "/opt/arduino/arduino"
@@ -37,7 +38,7 @@ def build (program) :
 
     shutil.copy(tempdir.name + "/build/sketch/" + sketchdir + ".ino.cpp", 
             tempdir.name + "/" + sketchdir + ".cpp") 
-    for f in ['emulator.make', 'emu/emulator.cpp', 'emu/emulator.h'] + glob.glob("arduino/*") :
+    for f in [installdir + '/emulator.make', installdir + '/emu/emulator.cpp', installdir + '/emu/emulator.h'] + glob.glob(installdir + "/arduino/*") :
         shutil.copy(f, tempdir.name)
 
     #shutil.copytree(tempdir.name, os.getcwd() + "/debug")
@@ -68,8 +69,8 @@ def findtests() :
                 tests.append(ns)
     return tests
 
-os.environ['PYTHONPATH'] = os.getcwd()    
-#os.environ['PYTHONPATH'] = testdir
+#os.environ['PYTHONPATH'] = os.getcwd()    
+os.environ['PYTHONPATH'] = installdir
 tests = findtests()
 testexe = None
 
