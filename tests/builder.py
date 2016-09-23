@@ -16,29 +16,30 @@ class ArduinoBuilder :
     arduino = "/opt/arduino/arduino"
     installdir = '/home/maximus/Arduino/ArduinoGrader'
     testdir = installdir + '/tests'
+    sketchbase = '' 
 
     program = None
     executable = None
 
     def set_program(p) :
         ArduinoBuilder.program = p 
-
-    def build() :
-        sketchbase = os.path.basename(ArduinoBuilder.program)
-        sketchdir = sketchbase.replace('.ino', '')
+        ArduinoBuilder.sketchbase = os.path.basename(ArduinoBuilder.program)
 
         # Fix the common .ino.ino problem 
-        sketchbase = sketchbase.replace('.ino.ino', '.ino')
+        ArduinoBuilder.sketchbase = ArduinoBuilder.sketchbase.replace('.ino.ino', '.ino')
 
         # Fix numbered overrides. 
-        sketchbase = sketchbase.replace('\(\d+\)', '')
+        ArduinoBuilder.sketchbase = re.sub('\s+\(\d+\)', '', ArduinoBuilder.sketchbase)
+        print ("motherfucking:", ArduinoBuilder.sketchbase)
 
+    def build() :
+        sketchdir = ArduinoBuilder.sketchbase.replace('.ino', '')
         ncpus = multiprocessing.cpu_count()
 
         os.makedirs(ArduinoBuilder.tempdir.name + "/" + sketchdir + "/build")
-        shutil.copy(ArduinoBuilder.program, ArduinoBuilder.tempdir.name + "/" + sketchdir + "/" + sketchbase)
+        shutil.copy(ArduinoBuilder.program, ArduinoBuilder.tempdir.name + "/" + sketchdir + "/" + ArduinoBuilder.sketchbase)
 
-        tempsketch = ArduinoBuilder.tempdir.name + "/" + sketchdir + "/" + sketchbase
+        tempsketch = ArduinoBuilder.tempdir.name + "/" + sketchdir + "/" + ArduinoBuilder.sketchbase
         tempbuild = ArduinoBuilder.tempdir.name + "/build"
 
         subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref',
@@ -62,3 +63,6 @@ class ArduinoBuilder :
         if ArduinoBuilder.executable is None : 
             ArduinoBuilder.build()
         return ArduinoBuilder.executable
+
+    def get_sketch() :
+        return ArduinoBuilder.sketchbase

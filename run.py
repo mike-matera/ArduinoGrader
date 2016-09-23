@@ -31,7 +31,7 @@ for e in os.listdir(ArduinoBuilder.testdir) :
         if os.path.isfile(f) :
             test = importlib.import_module("tests." + e)
             for pattern in test.patterns :
-                m = re.search(pattern[0], sketchfile)
+                m = re.search(pattern[0], ArduinoBuilder.get_sketch())
                 if m is not None :
                     # force compile.
                     ArduinoBuilder.get_exe()
