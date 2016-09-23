@@ -9,18 +9,20 @@ class Part1(unittest.TestCase):
     def test_any_frequency(self) :
         exe = ArduinoBuilder.get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog1"]))
-        test.logfile = sys.stdout
-        test.expect('.*frequency OK')
+        #test.logfile = sys.stdout
+        test.expect('.*period: (\d+)', timeout=5)
+        self.assertEqual(int(test.match.groups()[0]), 600)
+        test.expect(pexpect.EOF)
 
 class Part2(unittest.TestCase):
 
     def test_200_400(self) :
         exe = ArduinoBuilder.get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog1"]))
-        test.logfile = sys.stdout
-        test.expect('.*200')
-        test.expect('.*400')
-        test.expect('.*frequency OK')
+        #test.logfile = sys.stdout
+        test.expect('.*period: (\d+)', timeout=5)
+        self.assertEqual(int(test.match.groups()[0]), 600)
+        test.expect(pexpect.EOF)
 
 patterns = [
     ['prog1_part1.ino', Part1],

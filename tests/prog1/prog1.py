@@ -11,6 +11,5 @@ def test_run() :
         sketch.loop();
 
     counter = emu.pins[13]
-    if counter.get_high() == 200 and counter.get_low() == 400 :
-        print ("frequency OK")
+    print ("period:", counter.get_period())
 
