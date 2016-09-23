@@ -20,6 +20,8 @@ extern "C" {
 static PyObject *__emu; 
 static PyObject *__test;
 
+struct timespec start_time;
+
 static PyObject* setup_linkage(PyObject *self, PyObject *args) {
   setup();
   return Py_None;
@@ -45,6 +47,18 @@ static PyObject *PyInit_Sketch() {
   return PyModule_Create(&SketchModule);
 }
 
+#define TIME_DILATION_FACTOR 10
+unsigned long get_time() {
+  if (start_time.tv_sec == 0 && start_time.tv_nsec == 0) {
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+  }
+
+  struct timespec time; 
+  clock_gettime(CLOCK_MONOTONIC, &time);
+  time.tv_sec = time.tv_sec - start_time.tv_sec; 
+  time.tv_nsec = time.tv_nsec - start_time.tv_nsec;
+  return TIME_DILATION_FACTOR * (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
+}
 
 PyObject *__call_emu(string member, std::map<string,string> kwargs) {
   PyObject *sub = PyObject_GetAttrString(__emu, member.c_str());
@@ -54,7 +68,9 @@ PyObject *__call_emu(string member, std::map<string,string> kwargs) {
     PyDict_SetItemString(dict, ent.first.c_str(), val);    
     Py_DECREF(val);
   }
-  PyObject *tuple = PyTuple_New(0);
+  PyObject *tuple = PyTuple_New(1);
+  PyObject *ts = PyLong_FromLong(get_time());
+  PyTuple_SetItem(tuple, 0, ts);
   PyObject *rval = PyObject_Call(sub, tuple, dict);
   PyErr_Print();
   Py_DECREF(tuple);

@@ -7,15 +7,17 @@ import importlib
 import unittest 
 from tests.builder import ArduinoBuilder
 
-if len(sys.argv) != 2 :
+sketchfile = ' '.join(sys.argv[1:])
+
+if len(sys.argv) < 2 :
     print ("usage:", sys.argv[0], "<program.ino>")
     exit (1)
 
-if not os.path.isfile(sys.argv[1]) :
-    print ("Sketch doesn't exist:", sys.argv[1])
+if not os.path.isfile(sketchfile) :
+    print ("Sketch doesn't exist:", sketchfile)
     exit (2)
 
-ArduinoBuilder.set_program(sys.argv[1])
+ArduinoBuilder.set_program(sketchfile)
 os.environ['PYTHONPATH'] = ArduinoBuilder.installdir
 
 suite = unittest.TestSuite()
@@ -29,7 +31,7 @@ for e in os.listdir(ArduinoBuilder.testdir) :
         if os.path.isfile(f) :
             test = importlib.import_module("tests." + e)
             for pattern in test.patterns :
-                m = re.search(pattern[0], sys.argv[1])
+                m = re.search(pattern[0], sketchfile)
                 if m is not None :
                     # force compile.
                     ArduinoBuilder.get_exe()

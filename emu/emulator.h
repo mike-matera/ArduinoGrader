@@ -32,11 +32,7 @@ void emu_set_pinvalue(int pin, int value);
 PinMode emu_get_pinmode(int pin);
 int emu_get_pinvalue(int pin); 
 
-// Test control
-void test_start(void);
-void test_setup(void);
-bool test_loop(int);
-void test_exit(void);
-void test_check(const std::string &s);
+// Time handling.
+unsigned long get_time();
 
 #endif

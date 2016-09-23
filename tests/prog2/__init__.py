@@ -54,8 +54,8 @@ class Part2(unittest.TestCase) :
 
 
 patterns = [
-    ['prog2_part1.ino', Part1],
-    ['prog2_part2.ino', Part1, Part2]
+    ['pro(g|j)2_part1.ino', Part1],
+    ['pro(g|j)2_part2.ino', Part1, Part2]
 ] 
 
 name = "Project 2 Grader"

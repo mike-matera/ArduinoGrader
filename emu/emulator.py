@@ -1,3 +1,5 @@
+import time 
+
 from enum import Enum 
 
 NUMPINS   = 20
@@ -17,16 +19,16 @@ class Pin :
         self.mode = PinMode.kPullup;
         self.value = 0; 
 
-    def set_mode(self, m) :
+    def set_mode(self, ts, m) :
         self.mode = m
 
-    def get_mode(self) :
+    def get_mode(self, ts) :
         return self.mode; 
 
-    def set_value(self, v) :
+    def set_value(self, ts, v) :
         self.value = v;
 
-    def get_value(self) :
+    def get_value(self, ts) :
         return self.value
     
 class Emulator :
@@ -37,26 +39,26 @@ class Emulator :
             self.pins.append(Pin())
     
     # Property interface for the emulator. 
-    def get_property(self, **kwargs) :
+    def get_property(self, ts, **kwargs) :
         if kwargs['key'] in self.props :
             return self.props[kwargs['key']]
         else:
             return None
 
-    def set_property(self, **kwargs) :
+    def set_property(self, ts, **kwargs) :
         self.props[kwargs['key']] = kwargs['value']    
 
     # Pin interface for the emulator.
-    def set_pinmode(self, **kwargs) : 
-        self.pins[int(kwargs['pin'])].set_mode(PinMode(int(kwargs['mode'])))
+    def set_pinmode(self, ts, **kwargs) : 
+        self.pins[int(kwargs['pin'])].set_mode(ts, PinMode(int(kwargs['mode'])))
 
-    def get_pinmode(self, **kwargs) :
-        return self.pins[int(kwargs['pin'])].get_mode()
+    def get_pinmode(self, ts, **kwargs) :
+        return self.pins[int(kwargs['pin'])].get_mode(ts)
 
-    def set_pinvalue(self, **kwargs) :
-        self.pins[int(kwargs['pin'])].set_value(int(kwargs['value']))
+    def set_pinvalue(self, ts, **kwargs) :
+        self.pins[int(kwargs['pin'])].set_value(ts, int(kwargs['value']))
     
-    def get_pinvalue(self, **kwargs) :
-        return self.pins[int(kwargs['pin'])].get_value()
-        
+    def get_pinvalue(self, ts, **kwargs) :
+        return self.pins[int(kwargs['pin'])].get_value(ts)
+
 emu = Emulator()

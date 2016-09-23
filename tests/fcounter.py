@@ -1,30 +1,27 @@
 
-import time 
-
 from emu.emulator import Pin, PinMode 
 
 class FrequencyCounter(Pin) :
     def __init__(self) :
         super().__init__()
         self.enabled = False;
-        self.mark = time.time()
+        self.mark = 0
         self.last = 0
         self.lowtime = 0
         self.hightime = 0
 
-    def set_mode(self, m) :
-        super().set_mode(m)
+    def set_mode(self, ts, m) :
+        super().set_mode(ts, m)
         if m == PinMode.kOutput :
             self.enabled = True
-            self.mark = time.time()
+            self.mark = ts
 
-    def set_value(self, v) :
-        super().set_value(v)
+    def set_value(self, ts, v) :
+        super().set_value(ts, v)
         if self.enabled : 
             if self.last != v : 
-                ntime = time.time()
-                diff = int((ntime - self.mark) * 1000)
-                self.mark = ntime
+                diff = int((ts - self.mark) / 1000)
+                self.mark = ts
                 if self.last == 0 :
                     self.lowtime = diff
                 else:

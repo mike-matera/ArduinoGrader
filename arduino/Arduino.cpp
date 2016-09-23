@@ -18,19 +18,6 @@ using std::future;
 
 static future<void> tone_future; 
 static atomic_bool future_pending;
-struct timespec start_time;
-
-unsigned long get_time() {
-  if (start_time.tv_sec == 0 && start_time.tv_nsec == 0) {
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-  }
-
-  struct timespec time; 
-  clock_gettime(CLOCK_MONOTONIC, &time);
-  time.tv_sec = time.tv_sec - start_time.tv_sec; 
-  time.tv_nsec = time.tv_nsec - start_time.tv_nsec;
-  return (time.tv_sec * 1000000 + time.tv_nsec / 1000); 
-}
 
 void pinMode(uint8_t pin, uint8_t mode) {
   assert(pin < NUMPINS);

@@ -30,6 +30,9 @@ class ArduinoBuilder :
         # Fix the common .ino.ino problem 
         sketchbase = sketchbase.replace('.ino.ino', '.ino')
 
+        # Fix numbered overrides. 
+        sketchbase = sketchbase.replace('\(\d+\)', '')
+
         ncpus = multiprocessing.cpu_count()
 
         os.makedirs(ArduinoBuilder.tempdir.name + "/" + sketchdir + "/build")
