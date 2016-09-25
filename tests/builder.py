@@ -36,20 +36,25 @@ class ArduinoBuilder :
         sketchdir = ArduinoBuilder.sketchbase.replace('.ino', '')
         ncpus = multiprocessing.cpu_count()
 
-        os.makedirs(ArduinoBuilder.tempdir.name + "/" + sketchdir + "/build")
-        shutil.copy(ArduinoBuilder.program, ArduinoBuilder.tempdir.name + "/" + sketchdir + "/" + ArduinoBuilder.sketchbase)
+        os.makedirs(os.path.join(ArduinoBuilder.tempdir.name, sketchdir, "build"))
+        shutil.copy(ArduinoBuilder.program, os.path.join(ArduinoBuilder.tempdir.name, sketchdir, sketchbase))
 
-        tempsketch = ArduinoBuilder.tempdir.name + "/" + sketchdir + "/" + ArduinoBuilder.sketchbase
-        tempbuild = ArduinoBuilder.tempdir.name + "/build"
+        tempsketch = os.path.join(ArduinoBuilder.tempdir.name, sketchdir, sketchbase)
+        tempbuild = os.path.join(ArduinoBuilder.tempdir.name, "build")
 
         subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref',
                                'build.path=' + tempbuild, tempsketch])
 
         print ("\n*** Arduino build succeeded. ***\n")
 
-        shutil.copy(ArduinoBuilder.tempdir.name + "/build/sketch/" + sketchdir + ".ino.cpp", 
-                    ArduinoBuilder.tempdir.name + "/" + sketchdir + ".cpp") 
-        for f in [ArduinoBuilder.installdir + '/emu/emulator.make', ArduinoBuilder.installdir + '/emu/emulator.cpp', ArduinoBuilder.installdir + '/emu/emulator.h'] + glob.glob(ArduinoBuilder.installdir + "/arduino/*") :
+        shutil.copy( os.path.join(ArduinoBuilder.tempdir.name, "build", "sketch", sketchdir + ".ino.cpp"), 
+                     os.path.join(ArduinoBuilder.tempdir.name, sketchdir + ".cpp") )
+
+                
+                    
+        for f in [os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.make'), 
+                  os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.cpp'), 
+                  os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.h')] + glob.glob(ArduinoBuilder.installdir + "/arduino/*") :
             shutil.copy(f, ArduinoBuilder.tempdir.name)
 
         #shutil.copytreet(ArduinoBuilder.empdir.name, os.getcwd() + "/debug")
