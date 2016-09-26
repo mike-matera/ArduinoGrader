@@ -39,3 +39,6 @@ class FrequencyCounter(Pin) :
 
     def get_high(self) :
         return self.hightime
+
+    def report(self) : 
+        print (self.name, "fc ( h:", self.hightime, "l:", self.lowtime, ")")

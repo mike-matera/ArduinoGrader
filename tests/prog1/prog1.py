@@ -3,6 +3,7 @@ from tests.fcounter import FrequencyCounter
 from emu.emulator import emu, Pin, PinMode
 
 emu.pins[13] = FrequencyCounter()
+emu.pins[13].set_name("LED")
 
 # Test entry point. 
 def test_run() :    
@@ -10,6 +11,4 @@ def test_run() :
     for x in range(2) :
         sketch.loop();
 
-    counter = emu.pins[13]
-    print ("period:", counter.get_period())
-
+    emu.pins[13].report()

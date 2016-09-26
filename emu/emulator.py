@@ -30,12 +30,20 @@ class Pin :
 
     def get_value(self, ts) :
         return self.value
+
+    def set_name(self, n) :
+        self.name = n
     
+    def get_name(self) :
+        return self.name
+
 class Emulator :
     def __init__(self) :
         self.props = {}
         self.pins = []
         for p in range(NUMPINS) :
+            pin = Pin()
+            pin.set_name(str(p))
             self.pins.append(Pin())
     
     # Property interface for the emulator. 

@@ -17,18 +17,20 @@ extern "C" {
 #include "stdlib.h"
 }
 
-static PyObject *__emu; 
-static PyObject *__test;
+static PyObject *__emu = NULL;
+static PyObject *__test = NULL;
 
 struct timespec start_time;
 
 static PyObject* setup_linkage(PyObject *self, PyObject *args) {
   setup();
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
 static PyObject* loop_linkage(PyObject *self, PyObject *args) {
   loop();
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
@@ -80,6 +82,9 @@ PyObject *__call_emu(string member, std::map<string,string> kwargs) {
 }
 
 string emu_get_property(const string &key) {
+  if (__emu == NULL) 
+    return "";
+
   PyObject *value = __call_emu("get_property", {{"key", key}});
   string rval = PyUnicode_AsUTF8(value);
   Py_DECREF(value);
@@ -87,6 +92,9 @@ string emu_get_property(const string &key) {
 }
 
 void emu_set_property(const string &key, const string &val) {
+  if (__emu == NULL) 
+    return;
+
   PyObject *none = __call_emu("set_property", {
       {"key", key}, {"value", val}
     });
@@ -94,6 +102,9 @@ void emu_set_property(const string &key, const string &val) {
 }
 
 void emu_set_pinmode(int pin, PinMode mode) {
+  if (__emu == NULL) 
+    return;
+
   PyObject *none = __call_emu("set_pinmode", {
       {"pin", std::to_string(pin)}, 
 	{"mode", std::to_string(mode)},
@@ -102,6 +113,9 @@ void emu_set_pinmode(int pin, PinMode mode) {
 }
 
 void emu_set_pinvalue(int pin, int value) {
+  if (__emu == NULL) 
+    return;
+
   PyObject *none = __call_emu("set_pinvalue", {
       {"pin", std::to_string(pin)}, 
 	{"value", std::to_string(value)},
@@ -110,6 +124,9 @@ void emu_set_pinvalue(int pin, int value) {
 }
 
 PinMode emu_get_pinmode(int pin) {
+  if (__emu == NULL) 
+    return PinMode::kPullup;
+
   PyObject *mode = __call_emu("get_pinmode", {
       {"pin", std::to_string(pin)}, 
 	});	  
@@ -119,6 +136,9 @@ PinMode emu_get_pinmode(int pin) {
 }
 
 int emu_get_pinvalue(int pin) {
+  if (__emu == NULL) 
+    return 0;
+
   PyObject *value = __call_emu("get_pinvalue", {
       {"pin", std::to_string(pin)}, 
 	});	  
@@ -166,7 +186,7 @@ int main(int argc, char *argv[])
   emu_mod = PyImport_Import(name);
   __emu = PyObject_GetAttrString(emu_mod, "emu");
   Py_DECREF(name);
-  
+
   __test = PyObject_GetAttrString(test_mod, "test_run");
 
   if (__test && PyCallable_Check(__test)) {

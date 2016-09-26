@@ -23,6 +23,8 @@ os.environ['PYTHONPATH'] = ArduinoBuilder.installdir
 suite = unittest.TestSuite()
 loader = unittest.TestLoader()
 
+suite.addTests(loader.loadTestsFromTestCase(ArduinoBuilder))
+
 print ("Searching for test modules...")
 for e in os.listdir(ArduinoBuilder.testdir) :
     d = os.path.join(ArduinoBuilder.testdir,e)
@@ -33,9 +35,8 @@ for e in os.listdir(ArduinoBuilder.testdir) :
             for pattern in test.patterns :
                 m = re.search(pattern[0], ArduinoBuilder.get_sketch())
                 if m is not None :
-                    # force compile.
-                    ArduinoBuilder.get_exe()
                     for tc in pattern[1:] :
                         suite.addTests(loader.loadTestsFromTestCase(tc))
 
 unittest.TextTestRunner(verbosity=2).run(suite)
+ArduinoBuilder.save_logs()

@@ -35,11 +35,12 @@ def test_run_part1() :
 # part 2
 def test_run_part2l() :    
     sketch.setup();
-    for i in range(100) :
+    i=0
+    while True:
         sketch.loop();
         if i % 2  == 0 :
             emu.pins[leftButton].push()
-
+        i+=1
         counter = emu.pins[ledpin]
         period = counter.get_period() / 2
         if period > 0 :
@@ -48,14 +49,13 @@ def test_run_part2l() :
 # part 2
 def test_run_part2r() :    
     sketch.setup();
-    for i in range(100) :
+    i=0
+    while True:
         sketch.loop();
         if i % 2  == 0 :
-            emu.pins[rightButton].push()
-        
+            emu.pins[rightButton].push()        
+        i+=1
         counter = emu.pins[ledpin]
         period = counter.get_period() / 2
         if period > 0 :
             print ("period:", int(period))
-
-
