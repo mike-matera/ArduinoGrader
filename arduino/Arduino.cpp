@@ -47,8 +47,8 @@ int digitalRead(uint8_t pin) {
 
 // FIXME: What should happen when you try to read a pin that's not in analog mode?
 int analogRead(uint8_t pin) {
-  assert(pin < NUMANPINS);
-  pin += A0;
+  if (pin < A0) 
+    pin += A0;
   int value = emu_get_pinvalue(pin);
   return value;
 }
