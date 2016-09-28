@@ -65,7 +65,7 @@ class ArduinoBuilder(unittest.TestCase) :
         return self.sketchbase
 
     def open_log(self, name, mode) :
-        return open(os.path.join(self.tempdir, 'logs', name), mode)
+        return open(os.path.join(self.tempdir, 'log', name), mode)
 
     def save_logs(self) :
         zipf = zipfile.ZipFile('logs.zip', 'w', zipfile.ZIP_DEFLATED)
@@ -78,14 +78,17 @@ class ArduinoBuilder(unittest.TestCase) :
     # Test case... 
     # Executing this test case will build the program
     #
-    def test_compile(self) :
-        #log = ArduinoBuilder.open_log("build.log", "w")
+    def test_do_arduino_compile(self) :
         self.tempdir = os.path.join(self.context['tempdir'], "emu-" + self.sketchbase)
-        log = sys.stdout 
+
+        print ("(" + self.sketchbase + ") ", end='')
+        sys.stdout.flush()
 
         logdir = os.path.join(self.tempdir, 'log')
         if not os.path.isdir(logdir) :
             os.makedirs(logdir)
+
+        log = self.open_log(self.sketchbase + "-build.log", "w")
 
         ncpus = multiprocessing.cpu_count()
 
@@ -122,5 +125,5 @@ class ArduinoBuilder(unittest.TestCase) :
             return False
         
         #shutil.copy(self.executable, ".")
-        #log.close()
+        log.close()
         return True
