@@ -7,6 +7,7 @@ import importlib
 import unittest 
 import tempfile
 from tests.builder import ArduinoBuilder
+from tests.comments import Comments
 
 sketchfile = ' '.join(sys.argv[1:])
 
@@ -34,10 +35,10 @@ for e in os.listdir(ArduinoBuilder.testdir) :
         f = os.path.join(d, '__init__.py')
         if os.path.isfile(f) :
             test = importlib.import_module("tests." + e)
-            for pattern in test.patterns :
+            for pattern in test.files :
                 m = re.search(pattern[0], ArduinoBuilder.clean_sketch(sketchfile))
                 if m is not None :
-                    for tc in pattern[1:] :
+                    for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
                         names = loader.getTestCaseNames(tc)
                         for name in names :
                             suite.addTest(tc(name, context))
