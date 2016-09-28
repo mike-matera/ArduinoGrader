@@ -9,6 +9,8 @@ import io
 import importlib 
 import unittest 
 import tempfile 
+from tests.builder import ArduinoBuilder
+from tests.comments import Comments
 
 def zipwalk(vpath, zfilename):
     """Zip file tree generator.
@@ -79,7 +81,7 @@ if __name__=="__main__":
     installdir = '/home/maximus/Arduino/ArduinoGrader'
     os.environ['PYTHONPATH'] = installdir
 
-    if len(sys.argv) != 2 : 
+    if len(sys.argv) != 3 : 
         print ("usage: argv[0] <project> <zipfile>")
         exit(-1)
 
@@ -90,10 +92,12 @@ if __name__=="__main__":
     except Exception as e :
         print ("Failed to import test.\n", e)
         exit (2)
+
     
-    #tempdir = tempfile.TemporaryDirectory()
-    tempdir = './canvas-temp'
-    rdir = '/home/maximus/Downloads/submissions.zip'
+    temp = tempfile.TemporaryDirectory()
+    tempdir = temp.name
+    #tempdir = './canvas-temp'
+    rdir = sys.argv[2]
 
     suites = {}
     
@@ -133,19 +137,19 @@ if __name__=="__main__":
         f.write(d)
         f.close()
 
+        context = {}
+        context['tempdir'] = os.path.join(tempdir, user, 'temp')
+        context['program'] = extract
         for pattern in test.files :
             m = re.search(pattern[0], filename)
             if m is not None :
-                context = {}
-                context['tempdir'] = os.path.join(tempdir, user, 'temp')
-                context['program'] = extract
-                for tc in pattern[1:] :
+                for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
                     for name in unittest.defaultTestLoader.getTestCaseNames(tc) :
                         if user not in suites :
                             suites[user] = unittest.TestSuite() 
                         suites[user].addTest(tc(name, context))
                         
 
-    for user in suites : 
-        print ("Running test for user", user)
+    for user in sorted(suites) : 
+        print ("\n\n ****** Running test for user", user, " ******\n\n")
         unittest.TextTestRunner(verbosity=2).run(suites[user])
