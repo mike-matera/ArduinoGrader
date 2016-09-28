@@ -5,6 +5,7 @@ import os
 import re 
 import importlib 
 import unittest 
+import tempfile
 from tests.builder import ArduinoBuilder
 
 sketchfile = ' '.join(sys.argv[1:])
@@ -17,13 +18,14 @@ if not os.path.isfile(sketchfile) :
     print ("Sketch doesn't exist:", sketchfile)
     exit (2)
 
-ArduinoBuilder.set_program(sketchfile)
 os.environ['PYTHONPATH'] = ArduinoBuilder.installdir
 
 suite = unittest.TestSuite()
 loader = unittest.TestLoader()
 
-suite.addTests(loader.loadTestsFromTestCase(ArduinoBuilder))
+context = {}
+context['tempdir'] = tempfile.TemporaryDirectory().name
+context['program'] = sketchfile
 
 print ("Searching for test modules...")
 for e in os.listdir(ArduinoBuilder.testdir) :
@@ -33,10 +35,12 @@ for e in os.listdir(ArduinoBuilder.testdir) :
         if os.path.isfile(f) :
             test = importlib.import_module("tests." + e)
             for pattern in test.patterns :
-                m = re.search(pattern[0], ArduinoBuilder.get_sketch())
+                m = re.search(pattern[0], ArduinoBuilder.clean_sketch(sketchfile))
                 if m is not None :
                     for tc in pattern[1:] :
-                        suite.addTests(loader.loadTestsFromTestCase(tc))
+                        names = loader.getTestCaseNames(tc)
+                        for name in names :
+                            suite.addTest(tc(name, context))
 
 unittest.TextTestRunner(verbosity=2).run(suite)
-ArduinoBuilder.save_logs()
+#ArduinoBuilder.save_logs()

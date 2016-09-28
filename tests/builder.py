@@ -10,52 +10,66 @@ import itertools
 import unittest
 import zipfile 
 
+
 class ArduinoBuilder(unittest.TestCase) : 
 
-    tempdir = tempfile.TemporaryDirectory()
-
-    # XXX: These should be configurable. 
+    # 
+    # These should be configurable
+    #
     arduino = "/opt/arduino/arduino"
     installdir = '/home/maximus/Arduino/ArduinoGrader'
-    testdir = installdir + '/tests'
-    sketchbase = '' 
-    sketchdir  = '' 
-
-    program = None
-    executable = None
+    testdir = '/home/maximus/Arduino/ArduinoGrader/tests'
 
     # 
-    # Staic accessors 
+    # Clean up a sketch name
     #
-    def set_program(p) :
-        ArduinoBuilder.program = p 
-        ArduinoBuilder.sketchbase = os.path.basename(ArduinoBuilder.program)
+    def clean_sketch(program) :
+        sketchbase = os.path.basename(program)
 
         # Fix numbered overrides. 
-        ArduinoBuilder.sketchbase = re.sub('\s+\(\d+\)', '', ArduinoBuilder.sketchbase)
+        sketchbase = re.sub('\s+\(\d+\)', '', sketchbase)
         # Fix the common .ino.ino problem 
-        ArduinoBuilder.sketchbase = ArduinoBuilder.sketchbase.replace('.ino.ino', '.ino')
-        ArduinoBuilder.sketchdir = ArduinoBuilder.sketchbase.replace('.ino', '')
-
-        os.makedirs(os.path.join(ArduinoBuilder.tempdir.name, ArduinoBuilder.sketchdir, "build"))
-        os.makedirs(os.path.join(ArduinoBuilder.tempdir.name, 'logs'))
+        sketchbase = sketchbase.replace('.ino.ino', '.ino')
         
-        print ("Sketch is:", ArduinoBuilder.sketchbase)
+        return sketchbase
 
-    def get_exe() :
-        if ArduinoBuilder.executable is None : 
-            ArduinoBuilder.build()
-        return ArduinoBuilder.executable
+    def __init__(self, name, context, *args, **kwargs) :
+        super().__init__(name, *args, **kwargs)
 
-    def get_sketch() :
-        return ArduinoBuilder.sketchbase
+        self.sketchbase = '' 
+        self.sketchdir  = '' 
 
-    def open_log(name, mode) :
-        return open(os.path.join(ArduinoBuilder.tempdir.name, 'logs', name), mode)
+        self.program = None
+        self.executable = None
 
-    def save_logs() :
+        self.context = context
+        self.set_program(self.context['program'])
+        context['builder'] = self;
+
+    def set_program(self, p) :
+        self.program = p 
+        self.sketchbase = os.path.basename(self.program)
+
+        # Fix numbered overrides. 
+        self.sketchbase = re.sub('\s+\(\d+\)', '', self.sketchbase)
+        # Fix the common .ino.ino problem 
+        self.sketchbase = self.sketchbase.replace('.ino.ino', '.ino')
+        self.sketchdir = self.sketchbase.replace('.ino', '')
+
+    def get_exe(self) :
+        if self.executable is None : 
+            self.build()
+        return self.executable
+
+    def get_sketch(self) :
+        return self.sketchbase
+
+    def open_log(self, name, mode) :
+        return open(os.path.join(self.tempdir, 'logs', name), mode)
+
+    def save_logs(self) :
         zipf = zipfile.ZipFile('logs.zip', 'w', zipfile.ZIP_DEFLATED)
-        for root, dirs, files in os.walk(os.path.join(ArduinoBuilder.tempdir.name, 'logs')):
+        for root, dirs, files in os.walk(os.path.join(self.tempdir, 'logs')):
             for f in files:
                 zipf.write(os.path.join(root, f), arcname=f)
         zipf.close()
@@ -66,39 +80,47 @@ class ArduinoBuilder(unittest.TestCase) :
     #
     def test_compile(self) :
         #log = ArduinoBuilder.open_log("build.log", "w")
+        self.tempdir = os.path.join(self.context['tempdir'], "emu-" + self.sketchbase)
         log = sys.stdout 
+
+        logdir = os.path.join(self.tempdir, 'log')
+        if not os.path.isdir(logdir) :
+            os.makedirs(logdir)
 
         ncpus = multiprocessing.cpu_count()
 
-        shutil.copy(ArduinoBuilder.program, os.path.join(ArduinoBuilder.tempdir.name, ArduinoBuilder.sketchdir, ArduinoBuilder.sketchbase))
+        tempsketch = os.path.join(self.tempdir, self.sketchdir, self.sketchbase)
+        if not os.path.isdir(os.path.join(self.tempdir, self.sketchdir)) :
+            os.makedirs(os.path.join(self.tempdir, self.sketchdir))
 
-        tempsketch = os.path.join(ArduinoBuilder.tempdir.name, ArduinoBuilder.sketchdir, ArduinoBuilder.sketchbase)
-        tempbuild = os.path.join(ArduinoBuilder.tempdir.name, "build")
+        tempbuild = os.path.join(self.tempdir, "build")
+        if not os.path.isdir(tempbuild) :
+            os.makedirs(tempbuild)
 
-        subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref',
-                               'build.path=' + tempbuild, tempsketch], stdout=log, stderr=log)
+        shutil.copy(self.program, tempsketch)
+
+        subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref', 'build.path=' + tempbuild, tempsketch], stdout=log, stderr=log)
 
         log.write("\n*** Arduino verify succeeded. ***\n\n")
         log.flush()
 
-        shutil.copy( os.path.join(ArduinoBuilder.tempdir.name, "build", "sketch", ArduinoBuilder.sketchdir + ".ino.cpp"), 
-                     os.path.join(ArduinoBuilder.tempdir.name, ArduinoBuilder.sketchdir + ".cpp") )                
+        shutil.copy(os.path.join(self.tempdir, "build", "sketch", self.sketchdir + ".ino.cpp"), os.path.join(self.tempdir, self.sketchdir + ".cpp"))
                     
         for f in [os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.make'), 
                   os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.cpp'), 
                   os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.h')] + glob.glob(ArduinoBuilder.installdir + "/arduino/*") :
-            shutil.copy(f, ArduinoBuilder.tempdir.name)
+            shutil.copy(f, self.tempdir)
 
-        subprocess.check_call(['make', '-j', str(ncpus), '-f', 'emulator.make', '-C', ArduinoBuilder.tempdir.name, 'all'], stdout=log, stderr=log)
+        subprocess.check_call(['make', '-j', str(ncpus), '-f', 'emulator.make', '-C', self.tempdir, 'all'], stdout=log, stderr=log)
 
         log.write("\n*** Native compile succeeded. ***\n")
         log.flush()
 
-        ArduinoBuilder.executable = ArduinoBuilder.tempdir.name + '/test'
-        if not os.path.exists(ArduinoBuilder.executable) :
+        self.executable = self.tempdir + '/test'
+        if not os.path.exists(self.executable) :
             print ("ERROR: Failed to create executable")
             return False
         
-        shutil.copy(ArduinoBuilder.executable, ".")
+        #shutil.copy(self.executable, ".")
         #log.close()
         return True
