@@ -25,7 +25,7 @@ class Part2(unittest.TestCase):
         self.assertEqual(2*int(test.match.groups()[0]), int(test.match.groups()[1]))
         test.expect(pexpect.EOF)
 
-patterns = [
+files = [
     ['pro(j|g)1_part1(-\d+)?.ino', Part1],
     ['pro(j|g)1_part2(-\d+)?.ino', Part2]
 ] 

@@ -2,7 +2,6 @@ import unittest
 import subprocess 
 import pexpect 
 import sys
-from tests.builder import ArduinoBuilder
 
 class Part1(unittest.TestCase) :
 
@@ -70,8 +69,8 @@ class Part2(unittest.TestCase) :
         test.terminate()
 
 patterns = [
-    ['pro(g|j)2_part1.ino', ArduinoBuilder, Part1],
-    ['pro(g|j)2_part2.ino', ArduinoBuilder, Part1, Part2]
+    ['pro(g|j)2_part1.ino', Part1],
+    ['pro(g|j)2_part2.ino', Part1, Part2]
 ] 
 
 files = [
@@ -79,8 +78,8 @@ files = [
     ['bin4io.ino'],
     ['if-else-if.ino'],
     ['button-counter.ino'],
-    ['pro(g|j(ect)?)2_part1.ino', ArduinoBuilder, Part1],
-    ['pro(g|j(ect)?)2_part2.ino', ArduinoBuilder, Part1, Part2],
+    ['pro(g|j(ect)?)2_part1.ino', Part1],
+    ['pro(g|j(ect)?)2_part2.ino', Part1, Part2],
 ]
 
 name = "Project 2 Grader"
