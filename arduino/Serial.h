@@ -34,8 +34,6 @@
 
 class SerialEmulator : public Stream
 {
-private: 
-  struct termios ttysave;  
 
 public:
   SerialEmulator();
@@ -55,6 +53,11 @@ public:
   inline size_t write(int n) { return write((uint8_t)n); }
   using Print::write; // pull in write(str) and write(buf, size) from Print
   operator bool() { return true; }
+
+private:
+  bool is_tty;
+  struct termios ttysave;  
+  void setNonblocking(bool nb);
 };
 
 #define HAVE_HWSERIAL0

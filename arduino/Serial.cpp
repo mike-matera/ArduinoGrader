@@ -11,20 +11,38 @@
 using std::cin; 
 
 SerialEmulator::SerialEmulator()  {
-  // We must make STDIN non-blocking to emulate the behavior of Arduino.
-  // Different things must happen depending on whether stdin is a TTY or not...
-  struct termios ttystate;
-  if (tcgetattr(fileno(stdin), &ttystate) == 0) {
-    // tty...
-    ttysave = ttystate; 
-    ttystate.c_lflag &= ~ICANON;
-    ttystate.c_cc[VMIN] = 0;
-    ttystate.c_cc[VTIME] = 0;
-    tcsetattr(fileno(stdin), TCSANOW, &ttystate);
+  if (tcgetattr(fileno(stdin), &ttysave) == 0) {
+    is_tty = true;
   }else{
-    // pipe or something else...
+    is_tty = false;
+  }
+}
+
+/*
+// We must make STDIN non-blocking to emulate the behavior of Arduino.
+// Different things must happen depending on whether stdin is a TTY or not...
+*/
+void SerialEmulator::setNonblocking(bool nb) {
+  if (is_tty) {
+    // STDIN is a TTY
+    if (nb) {
+      struct termios ttystate = ttysave;  
+      ttystate.c_lflag &= ~ICANON;
+      ttystate.c_cc[VMIN] = 0;
+      ttystate.c_cc[VTIME] = 0;
+      tcsetattr(fileno(stdin), TCSANOW, &ttystate);
+    }else{
+      tcsetattr(fileno(stdin), TCSANOW, &ttysave);
+    }
+  }else{
+    // FIXME: This isn't tested...
+    // STDIN is a pipe or something else.
     int flags = fcntl(fileno(stdin), F_GETFL);
-    flags &= ~O_NONBLOCK; 
+    if (nb) {
+      flags &= ~O_NONBLOCK; 
+    }else{
+      flags |= O_NONBLOCK; 
+    }
     fcntl(fileno(stdin), F_SETFL, flags);
   }
 }
@@ -45,9 +63,11 @@ void SerialEmulator::end() {
 }
 
 int SerialEmulator::available() {
+  setNonblocking(true);
   int got = cin.get();
   cin.unget();
   cin.clear();
+  setNonblocking(false);
 
   int rval;
   if (got == EOF)
@@ -59,30 +79,17 @@ int SerialEmulator::available() {
 }
 
 int SerialEmulator::peek() {
-  int got = cin.get();
-  cin.unget();
-  cin.clear();
-
-  int rval;
-  if (got == EOF) 
-    rval = -1;
-  else
-    rval = got;
-
-  return rval;
+  if (available() == 0) {
+    return -1;
+  }
+  return cin.peek();
 }
 
 int SerialEmulator::read() {
-  int got = cin.get();
-  cin.clear();
-
-  int rval;
-  if (got == EOF)
-    rval = -1;
-  else
-    rval = got;
-  
-  return rval;
+  if (available() == 0) {
+    return -1;
+  }
+  return cin.get();
 }
 
 int SerialEmulator::availableForWrite() {
