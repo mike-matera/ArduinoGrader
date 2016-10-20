@@ -10,20 +10,25 @@ class Part1(unittest.TestCase) :
         self.context = context;
 
     def test_does_blink(self) :
-        '''Testing that your program blinks.'''
+        '''Testing that your program blinks with no input.'''
         exe = self.context['builder'].get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
-        test.expect('.*period: (\d+)')
-        test.terminate()
+        try:
+            test.expect('.*period: (\d+)')
+        except pexpect.TIMEOUT : 
+            self.fail("I can't see the LED blinking.")
 
     def test_serial_valid_number(self) :
         '''Testing that your program accepts a valid input.'''
         exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2, ignore_sighup=True)
+        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
         test.send("200\n")
-        test.expect('.*period: (\d+)')
-        test.expect('.*period: (\d+)')
-        test.expect('.*period: (\d+)')
+        try:
+            test.expect('.*period: (\d+)')
+            test.expect('.*period: (\d+)')
+            test.expect('.*period: (\d+)')
+        except pexpect.TIMEOUT : 
+            self.fail("I can't see the LED blinking.")
         self.assertEqual(200, int(test.match.group(1)), "The delay isn't 200 like I specified.")
 
     def test_serial_lower_limit(self) :
@@ -31,8 +36,11 @@ class Part1(unittest.TestCase) :
         exe = self.context['builder'].get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
         test.send("50\n")
-        test.expect('.*period: (\d+)')
-        test.expect('.*period: (\d+)')
+        try:
+            test.expect('.*period: (\d+)')
+            test.expect('.*period: (\d+)')
+        except pexpect.TIMEOUT : 
+            self.fail("I can't see the LED blinking.")
         self.assertEqual(100, int(test.match.group(1)), "The delay isn't 100 after entering a period of 50")
 
     def test_serial_upper_limit(self) :
@@ -40,8 +48,11 @@ class Part1(unittest.TestCase) :
         exe = self.context['builder'].get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
         test.send("1200\n")
-        test.expect('.*period: (\d+)')
-        test.expect('.*period: (\d+)')
+        try:
+            test.expect('.*period: (\d+)')
+            test.expect('.*period: (\d+)')
+        except pexpect.TIMEOUT : 
+            self.fail("I can't see the LED blinking.")
         self.assertEqual(1000, int(test.match.group(1)), "The delay isn't 1000 after entering a period of 1200")
 
 
@@ -55,21 +66,59 @@ class Part2(unittest.TestCase) :
         '''Testing the right button.'''
         exe = self.context['builder'].get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part2r']), timeout=2)
-        try:
-            test.expect('.*period: 100\d', timeout=30)
-            test.expect('.*period: 100\d')
-        except pexpect.TIMEOUT : 
-            self.fail("The period never seemed to get to the maximum.")
+        test.expect('.*period: (\d+)')
+        test.expect('.*period: (\d+)')
+        start = test.match.group(1)
+        test.expect('.*period: (\d+)')
+        test.expect('.*period: (\d+)')
+        end = test.match.group(1)
+        self.assertTrue(end > start, msg="The right button doesn't seem to make the blink delay larger.")
+    
+        test.expect('.*period: (\d+)')
+        period = int(test.match.group(1))
+        count = 0
+        while period < 1000 :
+            test.expect('.*period: (\d+)')
+            period = int(test.match.group(1))
+            count += 1
+            if count == 100 :
+                self.fail("Pushing the right button never got to the maximum period.")
+
+        test.expect('.*period: (\d+)')
+        period = int(test.match.group(1))
+        if (period - 1000) < 5 :
+            period = 1000
+
+        self.assertEqual(period, 1000, msg="The period exceeded the maximum while pushing the button.")
 
     def test_left_button(self) :
         '''Testing the left button.'''
         exe = self.context['builder'].get_exe()
         test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part2l']), timeout=2)
-        try:
-            test.expect('.*period: 10\d\s+', timeout=30)
-            test.expect('.*period: 10\d\s+ ')
-        except pexpect.TIMEOUT : 
-            self.fail("The period never seemed to get to the minimum.")
+        test.expect('.*period: (\d+)')
+        test.expect('.*period: (\d+)')
+        start = test.match.group(1)
+        test.expect('.*period: (\d+)')
+        test.expect('.*period: (\d+)')
+        end = test.match.group(1)
+        self.assertTrue(end < start, msg="The left button doesn't seem to make the blink delay smaller.")
+
+        test.expect('.*period: (\d+)')
+        period = int(test.match.group(1))
+        count = 0
+        while period > 100 :
+            test.expect('.*period: (\d+)')
+            period = int(test.match.group(1))
+            count += 1
+            if count == 100 :
+                self.fail("Pushing the left button never got to the minimum period.")
+
+        test.expect('.*period: (\d+)')
+        period = int(test.match.group(1))
+        if (period - 100) < 5 :
+            period = 100
+
+        self.assertEqual(period, 100, msg="The period exceeded the minimum while pushing the button.")
 
 files = [
     ['pro(g|j(ect)?)2_part1.ino', Part1],
