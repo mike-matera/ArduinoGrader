@@ -11,6 +11,8 @@ import unittest
 import tempfile 
 from tests.builder import ArduinoBuilder
 from tests.comments import Comments
+from tests.runner import runner 
+from tests.runner import histogram 
 
 def zipwalk(vpath, zfilename):
     """Zip file tree generator.
@@ -82,7 +84,7 @@ if __name__=="__main__":
     os.environ['PYTHONPATH'] = installdir
 
     if len(sys.argv) != 3 : 
-        print ("usage: argv[0] <project> <zipfile>")
+        print ("usage:", sys.argv[0], "<project> <zipfile>")
         exit(-1)
 
     test = None
@@ -100,7 +102,8 @@ if __name__=="__main__":
     rdir = sys.argv[2]
 
     suites = {}
-    
+    userfiles = {}
+
     for i, d, v in zipwalk(None, rdir):
         base = v[0]
         parts = base.split('_')
@@ -125,8 +128,8 @@ if __name__=="__main__":
         # Fix filename bugaboos 
         filename = filename.replace('.ino.ino', '.ino')
         
-        # Fix numering hassle. 
-        while re.search('-\d+\.\w+$', filename) is not None : 
+        # Fix numering hassle.         
+        while re.search('-(\d+)\.\w+$', filename) is not None : 
             filename = re.sub('-\d+\.', '.', filename)
 
         if not os.path.isdir(os.path.join(tempdir, user)) :
@@ -149,7 +152,13 @@ if __name__=="__main__":
                             suites[user] = unittest.TestSuite() 
                         suites[user].addTest(tc(name, context))
                         
+    #result = unittest.TextTestRunner(verbosity=2).run(suites[user])
 
     for user in sorted(suites) : 
         print ("\n\n ****** Running test for user", user, " ******\n\n")
-        unittest.TextTestRunner(verbosity=2).run(suites[user])
+        runner(suites[user])
+    
+    print ("\n\n===== done =====\n\n")
+    histogram()
+
+        

@@ -81,7 +81,7 @@ class ArduinoBuilder(unittest.TestCase) :
     def test_do_arduino_compile(self) :
         self.tempdir = os.path.join(self.context['tempdir'], "emu-" + self.sketchbase)
 
-        print ("(" + self.sketchbase + ") ", end='')
+        print ("Building sketch:", self.sketchbase, '... ', end='')
         sys.stdout.flush()
 
         logdir = os.path.join(self.tempdir, 'log')
@@ -124,6 +124,5 @@ class ArduinoBuilder(unittest.TestCase) :
             print ("ERROR: Failed to create executable")
             return False
         
-        #shutil.copy(self.executable, ".")
         log.close()
         return True

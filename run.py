@@ -8,6 +8,8 @@ import unittest
 import tempfile
 from tests.builder import ArduinoBuilder
 from tests.comments import Comments
+from tests.runner import runner 
+from tests.runner import histogram 
 
 sketchfile = ' '.join(sys.argv[1:])
 
@@ -43,5 +45,21 @@ for e in os.listdir(ArduinoBuilder.testdir) :
                         for name in names :
                             suite.addTest(tc(name, context))
 
-unittest.TextTestRunner(verbosity=2).run(suite)
+
+runner(suite)
+histogram()
+
+#for test in suite : 
+#    desc = test.shortDescription()
+#    if desc is not None:
+#        print (desc, ' ... ', end='', flush=True )
+#    result = test.run()
+#    if result.wasSuccessful() : 
+#        print ("PASS")
+#    else:
+#        print ("FAIL")
+#        print (result.failures[0])
+
+    #print (result)
+
 #ArduinoBuilder.save_logs()
