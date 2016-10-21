@@ -14,7 +14,7 @@ import zipfile
 class ArduinoBuilder(unittest.TestCase) : 
 
     # 
-    # These should be configurable
+    # FIXME: These should be configurable
     #
     arduino = "/opt/arduino/arduino"
     installdir = '/home/maximus/Arduino/ArduinoGrader'
@@ -46,6 +46,12 @@ class ArduinoBuilder(unittest.TestCase) :
         self.set_program(self.context['program'])
         context['builder'] = self;
 
+        self.tempdir = os.path.join(self.context['tempdir'], "emu-" + self.sketchbase)
+        self.logdir = os.path.join(self.tempdir, 'log')
+        context['logdir'] = self.logdir;
+        if not os.path.isdir(self.logdir) :
+            os.makedirs(self.logdir)
+
     def set_program(self, p) :
         self.program = p 
         self.sketchbase = os.path.basename(self.program)
@@ -65,7 +71,7 @@ class ArduinoBuilder(unittest.TestCase) :
         return self.sketchbase
 
     def open_log(self, name, mode) :
-        return open(os.path.join(self.tempdir, 'log', name), mode)
+        return open(os.path.join(self.logdir, name), mode)
 
     def save_logs(self) :
         zipf = zipfile.ZipFile('logs.zip', 'w', zipfile.ZIP_DEFLATED)
@@ -79,16 +85,8 @@ class ArduinoBuilder(unittest.TestCase) :
     # Executing this test case will build the program
     #
     def test_do_arduino_compile(self) :
-        self.tempdir = os.path.join(self.context['tempdir'], "emu-" + self.sketchbase)
-
         print ("Building sketch:", self.sketchbase, '... ', end='')
         sys.stdout.flush()
-
-        logdir = os.path.join(self.tempdir, 'log')
-        if not os.path.isdir(logdir) :
-            os.makedirs(logdir)
-
-        log = self.open_log(self.sketchbase + "-build.log", "w")
 
         ncpus = multiprocessing.cpu_count()
 
@@ -102,6 +100,7 @@ class ArduinoBuilder(unittest.TestCase) :
 
         shutil.copy(self.program, tempsketch)
 
+        log = self.open_log(self.sketchbase + "-build.log", "w")
         subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref', 'build.path=' + tempbuild, tempsketch], stdout=log, stderr=log)
 
         log.write("\n*** Arduino verify succeeded. ***\n\n")

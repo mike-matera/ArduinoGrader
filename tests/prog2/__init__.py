@@ -3,57 +3,51 @@ import subprocess
 import pexpect 
 import sys
 
-class Part1(unittest.TestCase) :
+from tests.base import GraderBase 
 
-    def __init__(self, name, context, *args, **kwargs) :
-        super().__init__(name, *args, **kwargs)
-        self.context = context;
+class Part1(GraderBase) :
 
     def test_does_blink(self) :
         '''Testing that your program blinks with no input.'''
-        exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
-        try:
-            test.expect('.*period: (\d+)')
-        except pexpect.TIMEOUT : 
-            self.fail("I can't see the LED blinking.")
+        with self.run_test(__name__ + ".prog2", 'part1', timeout=2) as test :
+            try:
+                test.expect('.*period: (\d+)')
+            except pexpect.TIMEOUT : 
+                self.fail("I can't see the LED blinking.")
 
     def test_serial_valid_number(self) :
         '''Testing that your program accepts a valid input.'''
-        exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
-        test.send("200\n")
-        try:
-            test.expect('.*period: (\d+)')
-            test.expect('.*period: (\d+)')
-            test.expect('.*period: (\d+)')
-        except pexpect.TIMEOUT : 
-            self.fail("I can't see the LED blinking.")
-        self.assertEqual(200, int(test.match.group(1)), "The delay isn't 200 like I specified.")
+        with self.run_test(__name__ + ".prog2", 'part1', timeout=2) as test :
+            test.send("200\n")
+            try:
+                test.expect('.*period: (\d+)')
+                test.expect('.*period: (\d+)')
+                test.expect('.*period: (\d+)')
+            except pexpect.TIMEOUT : 
+                self.fail("I can't see the LED blinking.")
+                self.assertEqual(200, int(test.match.group(1)), "The delay isn't 200 like I specified.")
 
     def test_serial_lower_limit(self) :
         '''Testing that your program rejects a low number.'''
-        exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
-        test.send("50\n")
-        try:
-            test.expect('.*period: (\d+)')
-            test.expect('.*period: (\d+)')
-        except pexpect.TIMEOUT : 
-            self.fail("I can't see the LED blinking.")
-        self.assertEqual(100, int(test.match.group(1)), "The delay isn't 100 after entering a period of 50")
+        with self.run_test(__name__ + ".prog2", 'part1' timeout=2) as test :
+            test.send("50\n")
+            try:
+                test.expect('.*period: (\d+)')
+                test.expect('.*period: (\d+)')
+            except pexpect.TIMEOUT : 
+                self.fail("I can't see the LED blinking.")
+                self.assertEqual(100, int(test.match.group(1)), "The delay isn't 100 after entering a period of 50")
 
     def test_serial_upper_limit(self) :
         '''Testing that your program rejects a high number.'''
-        exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog2", 'part1']), timeout=2)
-        test.send("1200\n")
-        try:
-            test.expect('.*period: (\d+)')
-            test.expect('.*period: (\d+)')
-        except pexpect.TIMEOUT : 
-            self.fail("I can't see the LED blinking.")
-        self.assertEqual(1000, int(test.match.group(1)), "The delay isn't 1000 after entering a period of 1200")
+        with self.run_test(__name__ + ".prog2", 'part1', timeout=2) as test :
+            test.send("1200\n")
+            try:
+                test.expect('.*period: (\d+)')
+                test.expect('.*period: (\d+)')
+            except pexpect.TIMEOUT : 
+                self.fail("I can't see the LED blinking.")
+                self.assertEqual(1000, int(test.match.group(1)), "The delay isn't 1000 after entering a period of 1200")
 
 
 class Part2(unittest.TestCase) :
