@@ -14,9 +14,13 @@ class GraderBase(unittest.TestCase):
 
     @contextmanager
     def run_test(self, *args, **kwargs) :
-        exe = self.context['builder'].get_exe()
+        try :
+            exe = self.context['builder'].get_exe()
+        except AttributeError :
+            self.fail("Your program didn't compile.")
+
         test = pexpect.spawnu(exe, [str(i) for i in args], **kwargs)
-        log = open(os.path.join(self.context['logdir'], 'arduino.log'), 'a')
+        log = open(os.path.join(self.context['logdir'], 'serial.log'), 'a')
         test.logfile = log
         yield test
         test.terminate()

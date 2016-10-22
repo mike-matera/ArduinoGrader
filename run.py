@@ -6,10 +6,10 @@ import re
 import importlib 
 import unittest 
 import tempfile
+import logging
 from tests.builder import ArduinoBuilder
 from tests.comments import Comments
-from tests.runner import runner 
-from tests.runner import histogram 
+from tests.runner import runner, histogram, save_logs
 
 sketchfile = ' '.join(sys.argv[1:])
 
@@ -46,20 +46,15 @@ for e in os.listdir(ArduinoBuilder.testdir) :
                             suite.addTest(tc(name, context))
 
 
-runner(suite)
+logger = logging.getLogger('grader')
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler(os.path.join(context['logdir'], 'grader.log'))
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+runner(suite, logger)
+save_logs('run_log.zip', context['logdir'])
 histogram()
-
-#for test in suite : 
-#    desc = test.shortDescription()
-#    if desc is not None:
-#        print (desc, ' ... ', end='', flush=True )
-#    result = test.run()
-#    if result.wasSuccessful() : 
-#        print ("PASS")
-#    else:
-#        print ("FAIL")
-#        print (result.failures[0])
-
-    #print (result)
-
-#ArduinoBuilder.save_logs()

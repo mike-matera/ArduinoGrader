@@ -1,41 +1,49 @@
+import os 
 import re 
+import tempfile 
+import zipfile 
 
 __histogram = {}
 
-def runner(suite) :
+def runner(suite, logger, **kwargs) :
+
     for test in suite : 
         testid = test.id()
         if testid not in __histogram : 
             __histogram[testid] = [0,0]
         desc = test.shortDescription()
-        if desc is not None:
-            print (desc, ' ... ', end='', flush=True )
+        if desc is None:
+            desc = testid
         result = test.run()
         if result.wasSuccessful() : 
             __histogram[testid][0] += 1
-            print ("PASS")
+            logger.info("[pass] %s", desc)
         else:
             if len(result.failures) == 1 :
                 __histogram[testid][1] += 1
-                print ("FAIL")
                 traceback = result.failures[0][1]
                 m = re.search("AssertionError:\s*(.*)", traceback)
                 if m is None :
-                    print ("There seemes to be an undefined error:")
-                    print (traceback)
+                    logger.error('[fail] %s\nThere seemes to be an undefined error:\n%s', desc, traceback)
                 else:
                     parts = m.group(1).split(':', maxsplit=1)
                     if len(parts) == 2 :
-                        print ("  Oops:", parts[0].strip())
-                        print ("    ", parts[1].strip())
+                        logger.error('[fail] %s\n  Oops: %s\n    %s', desc, parts[0].strip(), parts[1].strip())
                     else:
-                        print ("  Oops:")
-                        print ("    ", parts[0].strip())
+                        logger.error('[fail] %s\n  Oops: %s', desc, parts[0].strip())
 
             else:
-                print ("ERROR")
-                print (result.errors[0][1])
+                print ("[error] %s", result.errors[0][1])
                 __histogram[testid][1] += 1
+
+def save_logs(outfile, *files) :
+    zipf = zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED)
+    for fpath in files : 
+        for root, dirs, files in os.walk(fpath):
+            for f in files:
+                zipf.write(os.path.join(root, f), arcname=f)
+    zipf.close()
+    
                 
 def histogram() :
     print ("FAIL\tPASS\tTest")

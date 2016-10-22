@@ -20,19 +20,6 @@ class ArduinoBuilder(unittest.TestCase) :
     installdir = '/home/maximus/Arduino/ArduinoGrader'
     testdir = '/home/maximus/Arduino/ArduinoGrader/tests'
 
-    # 
-    # Clean up a sketch name
-    #
-    def clean_sketch(program) :
-        sketchbase = os.path.basename(program)
-
-        # Fix numbered overrides. 
-        sketchbase = re.sub('\s+\(\d+\)', '', sketchbase)
-        # Fix the common .ino.ino problem 
-        sketchbase = sketchbase.replace('.ino.ino', '.ino')
-        
-        return sketchbase
-
     def __init__(self, name, context, *args, **kwargs) :
         super().__init__(name, *args, **kwargs)
 
@@ -51,6 +38,19 @@ class ArduinoBuilder(unittest.TestCase) :
         context['logdir'] = self.logdir;
         if not os.path.isdir(self.logdir) :
             os.makedirs(self.logdir)
+
+    # 
+    # Clean up a sketch name
+    #
+    def clean_sketch(program) :
+        sketchbase = os.path.basename(program)
+
+        # Fix numbered overrides. 
+        sketchbase = re.sub('\s+\(\d+\)', '', sketchbase)
+        # Fix the common .ino.ino problem 
+        sketchbase = sketchbase.replace('.ino.ino', '.ino')
+        
+        return sketchbase
 
     def set_program(self, p) :
         self.program = p 
@@ -85,7 +85,7 @@ class ArduinoBuilder(unittest.TestCase) :
     # Executing this test case will build the program
     #
     def test_do_arduino_compile(self) :
-        print ("Building sketch:", self.sketchbase, '... ', end='')
+        '''Running Arduino verify.'''
         sys.stdout.flush()
 
         ncpus = multiprocessing.cpu_count()
@@ -99,29 +99,31 @@ class ArduinoBuilder(unittest.TestCase) :
             os.makedirs(tempbuild)
 
         shutil.copy(self.program, tempsketch)
+        shutil.copy(self.program, self.logdir)
 
         log = self.open_log(self.sketchbase + "-build.log", "w")
-        subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref', 'build.path=' + tempbuild, tempsketch], stdout=log, stderr=log)
+        try: 
+            subprocess.check_call([ArduinoBuilder.arduino, '--verify', '--preserve-temp-files', '--pref', 'build.path=' + tempbuild, tempsketch], stdout=log, stderr=log)
 
-        log.write("\n*** Arduino verify succeeded. ***\n\n")
-        log.flush()
+            log.write("\n*** Arduino verify succeeded. ***\n\n")
+            log.flush()
 
-        shutil.copy(os.path.join(self.tempdir, "build", "sketch", self.sketchdir + ".ino.cpp"), os.path.join(self.tempdir, self.sketchdir + ".cpp"))
+            shutil.copy(os.path.join(self.tempdir, "build", "sketch", self.sketchdir + ".ino.cpp"), os.path.join(self.tempdir, self.sketchdir + ".cpp"))
                     
-        for f in [os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.make'), 
-                  os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.cpp'), 
-                  os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.h')] + glob.glob(ArduinoBuilder.installdir + "/arduino/*") :
-            shutil.copy(f, self.tempdir)
+            for f in [os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.make'), 
+                      os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.cpp'), 
+                      os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.h')] + glob.glob(ArduinoBuilder.installdir + "/arduino/*") :
+                shutil.copy(f, self.tempdir)
 
-        subprocess.check_call(['make', '-j', str(ncpus), '-f', 'emulator.make', '-C', self.tempdir, 'all'], stdout=log, stderr=log)
+            subprocess.check_call(['make', '-j', str(ncpus), '-f', 'emulator.make', '-C', self.tempdir, 'all'], stdout=log, stderr=log)
+            
+            log.write("\n*** Native compile succeeded. ***\n")
+            log.flush()
+            self.executable = self.tempdir + '/test'
 
-        log.write("\n*** Native compile succeeded. ***\n")
-        log.flush()
+        except subprocess.CalledProcessError : 
+            log.close()
+            self.fail("Arduino verify failed.")
 
-        self.executable = self.tempdir + '/test'
-        if not os.path.exists(self.executable) :
-            print ("ERROR: Failed to create executable")
-            return False
-        
         log.close()
         return True

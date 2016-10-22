@@ -41,17 +41,17 @@ class Part1(GraderBase) :
             test.send(code + "\n")
 
             try :
-                test.expect(['(?i)(\d+)\s*(m|k)?\s*ohms?'])
+                test.expect(['(?i)(\d+)(\.\d+)?\s*(m|k)?\s*ohms?'])
             except Exception :
                 self.fail("I didn't see a value that I understand.")
                 
             num = int(test.match.group(1))
-            if test.match.group(2) is None :
+            if test.match.group(3) is None :
                 self.assertLess(num, 1000, msg='Ohms values cannot exceed 1000, they should be k ohms.')
-            elif test.match.group(2) == 'k' or test.match.group(2) == 'K' :
+            elif test.match.group(3) == 'k' or test.match.group(3) == 'K' :
                 self.assertLess(num, 1000, msg='K Ohms values cannot exceed 1000, they should be M ohms.')
                 num *= 1000
-            elif test.match.group(2) == 'm' or test.match.group(2) == 'M' :
+            elif test.match.group(3) == 'm' or test.match.group(3) == 'M' :
                 num *= 1000000
             else :
                 assert (False)

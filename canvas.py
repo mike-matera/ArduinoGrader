@@ -9,10 +9,10 @@ import io
 import importlib 
 import unittest 
 import tempfile 
+import logging
 from tests.builder import ArduinoBuilder
 from tests.comments import Comments
-from tests.runner import runner 
-from tests.runner import histogram 
+from tests.runner import runner, histogram, save_logs
 
 def zipwalk(vpath, zfilename):
     """Zip file tree generator.
@@ -149,16 +149,25 @@ if __name__=="__main__":
                 for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
                     for name in unittest.defaultTestLoader.getTestCaseNames(tc) :
                         if user not in suites :
-                            suites[user] = unittest.TestSuite() 
-                        suites[user].addTest(tc(name, context))
-                        
-    #result = unittest.TextTestRunner(verbosity=2).run(suites[user])
+                            suites[user] = [context, unittest.TestSuite()]
+                        suites[user][1].addTest(tc(name, context))
 
+    gradedir = sys.argv[1] + '-grades'
+    if not os.path.isdir(gradedir) :
+        os.makedirs(gradedir)
     for user in sorted(suites) : 
         print ("\n\n ****** Running test for user", user, " ******\n\n")
-        runner(suites[user])
-    
+        logger = logging.getLogger(user)
+        logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(os.path.join(suites[user][0]['logdir'], 'grader.log'))
+        fh.setLevel(logging.DEBUG)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+
+        runner(suites[user][1], logger)
+        save_logs(os.path.join(gradedir, user + '.zip'), suites[user][0]['logdir'])
+
     print ("\n\n===== done =====\n\n")
     histogram()
-
-        
