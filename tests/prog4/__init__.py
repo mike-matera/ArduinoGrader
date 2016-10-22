@@ -4,11 +4,9 @@ import pexpect
 import sys
 import re 
 
-class Part1(unittest.TestCase) :
+from tests.base import GraderBase 
 
-    def __init__(self, name, context, *args, **kwargs) :
-        super().__init__(name, *args, **kwargs)
-        self.context = context;
+class Part1(GraderBase) :
 
     def get_code(self, color) :
         if color == 'B' : 
@@ -39,23 +37,26 @@ class Part1(unittest.TestCase) :
         return base * pow(10, self.get_code(b[2]))
 
     def find_ohms(self, code) :
-        exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog4"]), timeout=1)
-        test.send(code + "\n")
+        with self.run_test( __name__ + ".prog4", timeout=1) as test :
+            test.send(code + "\n")
 
-        test.expect(['(?i)(\d+)\s*(m|k)?\s*ohms?'])
-        num = int(test.match.group(1))
-        if test.match.group(2) is None :
-            self.assertLess(num, 1000, msg='Ohms values cannot exceed 1000, they should be k ohms.')
-        elif test.match.group(2) == 'k' or test.match.group(2) == 'K' :
-            self.assertLess(num, 1000, msg='K Ohms values cannot exceed 1000, they should be M ohms.')
-            num *= 1000
-        elif test.match.group(2) == 'm' or test.match.group(2) == 'M' :
-            num *= 1000000
-        else :
-            assert (False)
+            try :
+                test.expect(['(?i)(\d+)\s*(m|k)?\s*ohms?'])
+            except Exception :
+                self.fail("I didn't see a value that I understand.")
+                
+            num = int(test.match.group(1))
+            if test.match.group(2) is None :
+                self.assertLess(num, 1000, msg='Ohms values cannot exceed 1000, they should be k ohms.')
+            elif test.match.group(2) == 'k' or test.match.group(2) == 'K' :
+                self.assertLess(num, 1000, msg='K Ohms values cannot exceed 1000, they should be M ohms.')
+                num *= 1000
+            elif test.match.group(2) == 'm' or test.match.group(2) == 'M' :
+                num *= 1000000
+            else :
+                assert (False)
 
-        self.assertEqual(num, self.get_resistor(code), 'The program returned the wrong value for the code: ' + code)
+            self.assertEqual(num, self.get_resistor(code), 'The program returned the wrong value for the code: ' + code)
 
     def test_100(self) :
         '''Testing 100 ohms'''

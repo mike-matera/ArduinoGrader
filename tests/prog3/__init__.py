@@ -3,28 +3,24 @@ import subprocess
 import pexpect 
 import sys
 
-class Part1(unittest.TestCase) :
+from tests.base import GraderBase 
 
-    def __init__(self, name, context, *args, **kwargs) :
-        super().__init__(name, *args, **kwargs)
-        self.context = context;
+class Part1(GraderBase) :
 
     def test_squeeze(self) :
         '''Testing your resistance calculation.'''
-        exe = self.context['builder'].get_exe()
-        test = pexpect.spawnu(' '.join([exe, __name__ + ".prog3"]), timeout=1)
-        try :
-            test.expect([
-                '(?i)resistance\s*:?\s*(\d+)', 
-                '(?i)is\s*:?\s*(\d+)', 
-                '(?i)(\d+)(\.\d+)?\s*ohms'
-             ])
-        except pexpect.TIMEOUT :
-            self.fail("I never saw you say the word \"resistance\" or a colon or \"ohms\".")
+        with self.run_test(__name__ + ".prog3", timeout=1) as test :
+            try :
+                test.expect([
+                    '(?i)resistance\s*:?\s*(\d+)', 
+                    '(?i)is\s*:?\s*(\d+)', 
+                    '(?i)(\d+)(\.\d+)?\s*ohms'
+                ])
+            except pexpect.TIMEOUT :
+                self.fail("I never saw you say the word \"resistance\" or a colon or \"ohms\".")
 
-        r = int(test.match.group(1))
-        self.assertEqual(r, 26056, msg="Bad resistance value: " + test.match.group(1))
-        test.terminate()
+            r = int(test.match.group(1))
+            self.assertEqual(r, 26056, msg="Bad resistance value: " + test.match.group(1))
 
 files = [
     ['resistor_calc.ino', Part1],
