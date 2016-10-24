@@ -25,3 +25,16 @@ class GraderBase(unittest.TestCase):
         yield test
         test.terminate()
         log.close()
+
+    def get_context(self) :
+        return self.context
+
+        
+class GraderSuite(unittest.TestSuite) :
+    
+    def __init__(self, ctx, *args, **kwargs) :
+        super().__init__(*args, **kwargs)
+        self.context = ctx
+        
+    def get_context(self) :
+        return self.context

@@ -12,7 +12,8 @@ import tempfile
 import logging
 from tests.builder import ArduinoBuilder
 from tests.comments import Comments
-from tests.runner import runner, histogram, save_logs
+from tests.runner import runner, histogram
+from tests.base import GraderSuite
 
 def zipwalk(vpath, zfilename):
     """Zip file tree generator.
@@ -83,9 +84,14 @@ if __name__=="__main__":
     installdir = '/home/maximus/Arduino/ArduinoGrader'
     os.environ['PYTHONPATH'] = installdir
 
-    if len(sys.argv) != 3 : 
-        print ("usage:", sys.argv[0], "<project> <zipfile>")
+    if len(sys.argv) < 3 : 
+        print ("usage:", sys.argv[0], "<project> <zipfile> [username]")
         exit(-1)
+
+    userfilter = None
+    if len(sys.argv) == 4 :
+        userfilter = sys.argv[3]
+        print ("Regrading user:", userfilter)
 
     test = None
     try :
@@ -109,6 +115,10 @@ if __name__=="__main__":
         parts = base.split('_')
         user = parts.pop(0)
         late = False
+
+        if user != userfilter :
+            continue
+
         if parts[0] == 'late' :
             late = True
             parts.pop(0)
@@ -140,34 +150,38 @@ if __name__=="__main__":
         f.write(d)
         f.close()
 
-        context = {}
-        context['tempdir'] = os.path.join(tempdir, user, 'temp')
-        context['program'] = extract
         for pattern in test.files :
             m = re.search(pattern[0], filename)
             if m is not None :
+                context = {}
+                context['tempdir'] = os.path.join(tempdir, user, 'temp')
+                context['program'] = extract
+                context['user'] = user
+
+                if user not in suites :
+                    suites[user] = []
+                
+                suite = GraderSuite(context)
+                suites[user].append(suite)
                 for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
                     for name in unittest.defaultTestLoader.getTestCaseNames(tc) :
-                        if user not in suites :
-                            suites[user] = [context, unittest.TestSuite()]
-                        suites[user][1].addTest(tc(name, context))
+                        suite.addTest(tc(name, context))
 
     gradedir = sys.argv[1] + '-grades'
     if not os.path.isdir(gradedir) :
         os.makedirs(gradedir)
     for user in sorted(suites) : 
         print ("\n\n ****** Running test for user", user, " ******\n\n")
-        logger = logging.getLogger(user)
-        logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(os.path.join(suites[user][0]['logdir'], 'grader.log'))
-        fh.setLevel(logging.DEBUG)
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-        logger.addHandler(ch)
-
-        runner(suites[user][1], logger)
-        save_logs(os.path.join(gradedir, user + '.zip'), suites[user][0]['logdir'])
+        runner(suites[user], os.path.join(gradedir, user + '.zip'))
 
     print ("\n\n===== done =====\n\n")
-    histogram()
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(os.path.join(gradedir, 'histogram.txt'))
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    histogram(logger)

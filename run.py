@@ -6,10 +6,10 @@ import re
 import importlib 
 import unittest 
 import tempfile
-import logging
 from tests.builder import ArduinoBuilder
 from tests.comments import Comments
-from tests.runner import runner, histogram, save_logs
+from tests.runner import runner, histogram
+from tests.base import GraderSuite
 
 sketchfile = ' '.join(sys.argv[1:])
 
@@ -23,12 +23,13 @@ if not os.path.isfile(sketchfile) :
 
 os.environ['PYTHONPATH'] = ArduinoBuilder.installdir
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
-
 context = {}
 context['tempdir'] = tempfile.TemporaryDirectory().name
 context['program'] = sketchfile
+context['user'] = 'unknown'
+
+suite = [GraderSuite(context)]
+loader = unittest.TestLoader()
 
 print ("Searching for test modules...")
 for e in os.listdir(ArduinoBuilder.testdir) :
@@ -43,18 +44,8 @@ for e in os.listdir(ArduinoBuilder.testdir) :
                     for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
                         names = loader.getTestCaseNames(tc)
                         for name in names :
-                            suite.addTest(tc(name, context))
+                            suite[0].addTest(tc(name, context))
 
 
-logger = logging.getLogger('grader')
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler(os.path.join(context['logdir'], 'grader.log'))
-fh.setLevel(logging.DEBUG)
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-logger.addHandler(fh)
-logger.addHandler(ch)
-
-runner(suite, logger)
-save_logs('run_log.zip', context['logdir'])
+runner(suite, 'run_log.zip')
 histogram()

@@ -72,7 +72,7 @@ class Part1(GraderBase) :
 
     def test_10M(self) :
         '''Testing 10M ohms'''
-        self.find_ohms("Br B B")
+        self.find_ohms("Br B Bu")
 
     def test_all_colors(self) :
         '''Testing various colors'''

@@ -31,11 +31,11 @@ class ArduinoBuilder(unittest.TestCase) :
 
         self.context = context
         self.set_program(self.context['program'])
-        context['builder'] = self;
+        self.context['builder'] = self;
 
         self.tempdir = os.path.join(self.context['tempdir'], "emu-" + self.sketchbase)
         self.logdir = os.path.join(self.tempdir, 'log')
-        context['logdir'] = self.logdir;
+        self.context['logdir'] = self.logdir;
         if not os.path.isdir(self.logdir) :
             os.makedirs(self.logdir)
 
@@ -86,7 +86,6 @@ class ArduinoBuilder(unittest.TestCase) :
     #
     def test_do_arduino_compile(self) :
         '''Running Arduino verify.'''
-        sys.stdout.flush()
 
         ncpus = multiprocessing.cpu_count()
 
