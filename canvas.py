@@ -116,7 +116,7 @@ if __name__=="__main__":
         user = parts.pop(0)
         late = False
 
-        if user != userfilter :
+        if userfilter is not None and user != userfilter :
             continue
 
         if parts[0] == 'late' :
