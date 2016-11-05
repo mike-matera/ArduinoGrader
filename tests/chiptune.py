@@ -21,6 +21,59 @@ class ChipTune(Pin) :
             n['tone'] = v
             self.melody.append(n)
 
-    def get_melody(self) :
-        for i in range(0, len(self.melody)) :
-            print(i, ":", self.melody[i])
+    def note_for(self, f) :
+        if f == 261 :
+            return 'c'
+        elif f == 277 :
+            return 'C'
+        elif f == 294 :
+            return 'd'
+        elif f == 311 :
+            return 'D'
+        elif f == 330 :
+            return 'e'
+        elif f == 349 :
+            return 'f'
+        elif f == 370 :
+            return 'F'
+        elif f == 392 :
+            return 'g'
+        elif f == 415 :
+            return 'G'
+        elif f == 440 :
+            return 'a'
+        elif f == 466 :
+            return 'A'
+        elif f == 494 :
+            return 'b'
+        elif f == 0 :
+            return ' '
+        else :
+            return 'X'
+
+    def clear_melody(self) : 
+        self.melody = []
+
+    def report_melody(self) :
+        last_ts = 0; 
+        last_tone = 0;
+        rval = ""
+        for n in self.melody : 
+            if n['tone'] != last_tone : 
+                duration = int((n['ts'] - last_ts)/1000)
+                if duration == 190 :
+                    rval += self.note_for(last_tone)
+                elif duration > 190 :
+                    rval += self.note_for(last_tone)
+                    duration -= 200 
+                    while duration > 10 : 
+                        if last_tone == 0 : 
+                            rval += ' '
+                        else:
+                            rval += '-'
+                        duration -= 200
+                last_ts = n['ts']
+                last_tone = n['tone']
+        print ("melody-report (" + rval + ")")
+        self.melody = []
+        return rval
