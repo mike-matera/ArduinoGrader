@@ -41,7 +41,7 @@ for e in os.listdir(ArduinoBuilder.testdir) :
             for pattern in test.files :
                 m = re.search(pattern[0], ArduinoBuilder.clean_sketch(sketchfile))
                 if m is not None :
-                    for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
+                    for tc in ['.*\.ino', Comments, ArduinoBuilder] + pattern[1:] :
                         names = loader.getTestCaseNames(tc)
                         for name in names :
                             suite[0].addTest(tc(name, context))

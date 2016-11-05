@@ -163,7 +163,7 @@ if __name__=="__main__":
                 
                 suite = GraderSuite(context)
                 suites[user].append(suite)
-                for tc in ['.*\.ino', ArduinoBuilder, Comments] + pattern[1:] :
+                for tc in ['.*\.ino', Comments, ArduinoBuilder] + pattern[1:] :
                     for name in unittest.defaultTestLoader.getTestCaseNames(tc) :
                         suite.addTest(tc(name, context))
 
