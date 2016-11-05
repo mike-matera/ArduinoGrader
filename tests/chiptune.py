@@ -74,6 +74,7 @@ class ChipTune(Pin) :
                         duration -= 200
                 last_ts = n['ts']
                 last_tone = n['tone']
+        rval = rval.strip()
         print ("melody-report (" + rval + ")")
         self.melody = []
         return rval
