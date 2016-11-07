@@ -1,5 +1,4 @@
-
-from emu.emulator import Pin, PinMode 
+from emu.emulator import emu, Pin, PinMode 
 
 class ChipTune(Pin) :
 
@@ -55,18 +54,28 @@ class ChipTune(Pin) :
         self.melody = []
 
     def report_melody(self) :
+        # If a tone is playing, act like it has stopped. 
+        # this is a hack to help students. 
+        if self.melody[-1]['tone'] != 0 :
+            n = {}
+            n['ts'] = emu.get_timestamp()
+            n['tone'] = 0
+            self.melody.append(n)
+
         last_ts = 0; 
         last_tone = 0;
         rval = ""
         for n in self.melody : 
             if n['tone'] != last_tone : 
                 duration = int((n['ts'] - last_ts)/1000)
+                print ('tone', n, duration)
                 if duration == 190 :
                     rval += self.note_for(last_tone)
                 elif duration > 190 :
                     rval += self.note_for(last_tone)
                     duration -= 200 
                     while duration > 10 : 
+                        print ('fuck', duration)
                         if last_tone == 0 : 
                             rval += ' '
                         else:

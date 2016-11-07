@@ -76,8 +76,9 @@ class OhmsLaw(GraderBase) :
 
 
 files = [
-    ['month_names.ino', MonthNames],
-    ['ohms_law.ino', OhmsLaw],
+    ['month(_|-)names?.ino', MonthNames],
+    ['months?.ino', MonthNames],
+    ['ohms(_|-)law.ino', OhmsLaw],
 ]
 
 name = "Project 6 Grader"
