@@ -17,6 +17,8 @@ extern "C" {
 #include "stdlib.h"
 }
 
+#define TIME_DILATION_FACTOR 10
+
 static PyObject *__emu = NULL;
 static PyObject *__test = NULL;
 
@@ -49,12 +51,7 @@ static PyObject *PyInit_Sketch() {
   return PyModule_Create(&SketchModule);
 }
 
-#define TIME_DILATION_FACTOR 10
 unsigned long get_time() {
-  if (start_time.tv_sec == 0 && start_time.tv_nsec == 0) {
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-  }
-
   struct timespec time; 
   clock_gettime(CLOCK_MONOTONIC, &time);
   time.tv_sec = time.tv_sec - start_time.tv_sec; 
@@ -186,6 +183,11 @@ int main(int argc, char *argv[])
   emu_mod = PyImport_Import(name);
   __emu = PyObject_GetAttrString(emu_mod, "emu");
   Py_DECREF(name);
+
+  // Record the start time. 
+  emu_set_property("time.dilation", std::to_string(TIME_DILATION_FACTOR));
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
+  emu_set_property("time.start", std::to_string(start_time.tv_sec * 1000000 + start_time.tv_nsec / 1000));
 
   __test = PyObject_GetAttrString(test_mod, "test_run");
 
