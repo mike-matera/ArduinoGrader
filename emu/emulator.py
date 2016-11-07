@@ -4,6 +4,7 @@ from enum import Enum
 
 NUMPINS   = 20
 NUMANPINS = 8
+TIMEDILATIONFACTOR = 10 
 
 class PinMode(Enum):
     kOutput   = 0 
@@ -69,4 +70,12 @@ class Emulator :
     def get_pinvalue(self, ts, **kwargs) :
         return self.pins[int(kwargs['pin'])].get_value(ts)
 
+    def get_timestamp(self) :
+        st = int(self.get_property(0, key='time.start'));
+        td = int(self.get_property(0, key='time.dilation'));
+        now = int (time.monotonic() * 1000000)
+        duration = td * (now - st);
+        print ("cocksmomker", st, td, now)
+        return duration
+        
 emu = Emulator()
