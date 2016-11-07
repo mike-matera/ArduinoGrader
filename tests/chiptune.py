@@ -68,19 +68,15 @@ class ChipTune(Pin) :
         for n in self.melody : 
             if n['tone'] != last_tone : 
                 duration = int((n['ts'] - last_ts)/1000)
-                print ('tone', n, duration)
-                if duration == 190 :
+                if duration > 100 : 
+                    duration -= 200
                     rval += self.note_for(last_tone)
-                elif duration > 190 :
-                    rval += self.note_for(last_tone)
-                    duration -= 200 
-                    while duration > 10 : 
-                        print ('fuck', duration)
+                    while duration > 100 : 
+                        duration -= 200
                         if last_tone == 0 : 
                             rval += ' '
                         else:
                             rval += '-'
-                        duration -= 200
                 last_ts = n['ts']
                 last_tone = n['tone']
         rval = rval.strip()

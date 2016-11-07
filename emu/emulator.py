@@ -75,7 +75,6 @@ class Emulator :
         td = int(self.get_property(0, key='time.dilation'));
         now = int (time.monotonic() * 1000000)
         duration = td * (now - st);
-        print ("cocksmomker", st, td, now)
         return duration
         
 emu = Emulator()
