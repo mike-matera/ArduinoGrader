@@ -150,6 +150,7 @@ if __name__=="__main__":
         f.write(d)
         f.close()
 
+        print ("Matching file:", filename)
         for pattern in test.files :
             m = re.search(pattern[0], filename)
             if m is not None :
