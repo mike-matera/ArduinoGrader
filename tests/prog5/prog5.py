@@ -2,8 +2,10 @@ import sketch
 from tests.button import Button
 from emu.emulator import emu, Pin, PinMode
 
-leftButton = 12
+leftButton = 13
+rightButton = 12
 emu.pins[leftButton] = Button()
+emu.pins[rightButton] = Button()
 
 def test_run(part) :
     if part == 'word' :
@@ -22,10 +24,11 @@ def test_run_word() :
 
 def test_run_sentence() :
     sketch.setup()
-    sketch.loop()
+    while True: 
+        sketch.loop()
 
 def test_run_abort() :
     sketch.setup()
     emu.pins[leftButton].push_delay(100)
+    emu.pins[rightButton].push_delay(100)
     sketch.loop()
-

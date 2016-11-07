@@ -39,7 +39,7 @@ class Part2(GraderBase) :
 
     def test_abort(self) :
         '''Tesing the left button.'''
-        with self.run_test( __name__ + ".prog5", 'sentence', timeout=1) as test :       
+        with self.run_test( __name__ + ".prog5", 'abort', timeout=1) as test :       
             test.send('blah blah blah blah blah blah blah blah blah blah blah')
             try:
                 test.expect('(?i)abort')
@@ -47,8 +47,8 @@ class Part2(GraderBase) :
                 self.fail("Failed to abort when I pushed the left button.")
 
 files = [
-    ['palindrome_word.ino', Part1],
-    ['palindrome_sentence.ino', Part2],
+    ['palindrome((_|-)word)?\.ino', Part1],
+    ['palindrome(_|-)sentence\.ino', Part2],
 ]
 
 name = "Project 5 Grader"
