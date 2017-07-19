@@ -9,7 +9,7 @@ import glob
 import itertools 
 import unittest
 import zipfile 
-
+import glob
 
 class ArduinoBuilder(unittest.TestCase) : 
 
@@ -90,15 +90,29 @@ class ArduinoBuilder(unittest.TestCase) :
         ncpus = multiprocessing.cpu_count()
 
         tempsketch = os.path.join(self.tempdir, self.sketchdir, self.sketchbase)
-        if not os.path.isdir(os.path.join(self.tempdir, self.sketchdir)) :
-            os.makedirs(os.path.join(self.tempdir, self.sketchdir))
+        if not os.path.isdir(os.path.join(self.tempdir)) :
+            os.makedirs(os.path.join(self.tempdir))
 
         tempbuild = os.path.join(self.tempdir, "build")
         if not os.path.isdir(tempbuild) :
             os.makedirs(tempbuild)
 
-        shutil.copy(self.program, tempsketch)
-        shutil.copy(self.program, self.logdir)
+        # If the sketch is saved in an eponymous directory. Copy all contents. 
+        if self.sketchdir == self.program.split(os.sep)[-2] :
+            shutil.copytree(os.path.dirname(self.program), os.path.dirname(tempsketch))
+            for f in glob.glob(os.path.dirname(self.program) + '/*') : 
+                shutil.copy(f, self.logdir)
+        else:
+            os.makedirs(os.path.join(self.tempdir, self.sketchdir))
+            shutil.copy(self.program, tempsketch)
+            shutil.copy(self.program, self.logdir)
+
+        # Check if there are extra files defined in the test... copy them if they exist
+        for extrafile in self.context['extras'] :
+            extrafilename = os.path.join(os.path.dirname(self.program), extrafile)
+            if os.path.isfile(extrafilename) :
+                shutil.copy(extrafilename, os.path.dirname(tempsketch))
+                shutil.copy(extrafilename, self.logdir)
 
         log = self.open_log(self.sketchbase + "-build.log", "w")
         try: 
@@ -107,8 +121,11 @@ class ArduinoBuilder(unittest.TestCase) :
             log.write("\n*** Arduino verify succeeded. ***\n\n")
             log.flush()
 
-            shutil.copy(os.path.join(self.tempdir, "build", "sketch", self.sketchdir + ".ino.cpp"), os.path.join(self.tempdir, self.sketchdir + ".cpp"))
-                    
+            artifactdir = os.path.join(self.tempdir, "build", "sketch")
+            artifacts = glob.glob(os.path.join(artifactdir, "*.h")) + glob.glob(os.path.join(artifactdir, "*.cpp"))
+            for artifact in artifacts :
+                shutil.copy(artifact, os.path.join(self.tempdir, os.path.basename(artifact)))
+
             for f in [os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.make'), 
                       os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.cpp'), 
                       os.path.join(ArduinoBuilder.installdir, 'emu', 'emulator.h')] + glob.glob(ArduinoBuilder.installdir + "/arduino/*") :

@@ -14,6 +14,7 @@ class ChipTune(Pin) :
 
     def set_value(self, ts, v) :
         super().set_value(ts, v)
+        print ("Two tears in a bucket.")
         if self.enabled :  
             n = {}
             n['ts'] = ts
@@ -56,7 +57,7 @@ class ChipTune(Pin) :
     def report_melody(self) :
         # If a tone is playing, act like it has stopped. 
         # this is a hack to help students. 
-        if self.melody[-1]['tone'] != 0 :
+        if len(self.melody) > 0 and self.melody[-1]['tone'] != 0 :
             n = {}
             n['ts'] = emu.get_timestamp()
             n['tone'] = 0

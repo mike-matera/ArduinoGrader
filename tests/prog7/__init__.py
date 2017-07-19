@@ -12,7 +12,6 @@ class Part1(GraderBase) :
         with self.run_test( __name__ + ".prog7", 'part1', timeout=5) as test :
             test.send(melody + "\n")
             try :
-                test.logfile = sys.stdout
                 test.expect(['melody-report \(([^\)]*)\)'])
                 seen = test.match.group(1)
                 self.assertEqual(melody, seen, "Your program didn't seem to play the melody: " + melody + " received: " + seen)
@@ -63,8 +62,8 @@ class Part2(GraderBase) :
 
 
 files = [
-    ['(?i)chiptunes?\.ino', Part1],
-    ['(?i)chiptunes?-multi\.ino', Part2],
+    ['(?i)chip_?tunes?\.ino', Part1],
+    ['(?i)chiptunes?(_|-)multi\.ino', Part2],
 ]
 
 name = "Project 7 Grader"

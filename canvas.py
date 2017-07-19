@@ -15,72 +15,79 @@ from tests.comments import Comments
 from tests.runner import runner, histogram
 from tests.base import GraderSuite
 
-def zipwalk(vpath, zfilename):
-    """Zip file tree generator.
+def unzip_walk(zipname, vpath) :
+    if vpath is None :
+        vpath = [] 
 
-    Thanks: http://code.activestate.com/recipes/425840-zip-walker-zip-file-tree-generator/
-    For each file entry in a zip archive, this yields
-    a two tuple of the zip information and the data
-    of the file as a StringIO object.
+    z = zipfile.ZipFile(zipname, 'r')
+    for info in z.infolist() :
+        nextpath = vpath + [info.filename]
+        data = z.read(info.filename)
+        if (os.path.splitext(info.filename)[1]).lower() == '.zip' :
+            # This is a zip... recurse. 
+            with tempfile.NamedTemporaryFile() as tempzip : 
+                tempzip.write(data)
+                tempzip.flush()
+                for x in unzip_walk(tempzip.name, nextpath) :
+                    yield x 
+        else:
+            yield (nextpath, data)
 
-    zipinfo, filedata
+    z.close()
 
-    zipinfo is an instance of zipfile.ZipInfo class
-    which gives information of the file contained
-    in the zip archive. filedata is a StringIO instance
-    representing the actual file data.
+def submissions(zipfile) :
+    subs = {}
+    for name, data in unzip_walk(zipfile, None) :
+        parts = name[0].split('_')
+        user = parts.pop(0)
 
-    If the file again a zip file, the generator extracts
-    the contents of the zip file and walks them.
+        if user not in subs :
+            subs[user] = {}
 
-    Inspired by os.walk .
-    """
+        if parts[0] == 'late' :
+            subs[user]['late'] = True
+            parts.pop(0)
+        else:
+            subs[user]['late'] = False
 
-    if vpath is None : 
-        vpath = []
+        while re.match('\d+', parts[0]) is not None :
+            parts.pop(0)
+            
+        # Find the real filename
+        if len(name) > 1 : 
+            filename = name[-1]
+        else:
+            filename = '_'.join(parts)
 
-    tempdir=os.environ.get('TEMP',os.environ.get('TMP',os.environ.get('TMPDIR','/tmp')))
-    
-    try:
-        z=zipfile.ZipFile(zfilename,'r')
-        for info in z.infolist():
-            fname = info.filename
-            data = z.read(fname)
-            extn = (os.path.splitext(fname)[1]).lower()
+        if filename[-1] == '/' : 
+            continue 
 
-            if extn=='.zip':
-                checkz=False
-                
-                tmpfpath = os.path.join(tempdir,os.path.basename(fname))
-                try:
-                    open(tmpfpath,'w+b').write(data)
-                except (IOError, OSError) as e:
-                    print (e)
+        dirname = os.path.dirname(filename)
+        filename = os.path.basename(filename)
 
-                if zipfile.is_zipfile(tmpfpath):
-                    checkz=True
+        origname = filename;
 
-                if checkz:
-                    try:
-                        for x in zipwalk(vpath + [fname], tmpfpath):
-                            yield x
-                    except Exception as e:
-                        raise
-                    
-                try:
-                    os.remove(tmpfpath)
-                except:
-                    pass
-            else:
-                yield (info, data, vpath + [fname])
-    except RuntimeError as e:
-        print ('Runtime Error')
-    except zipfile.error as e:
-        raise
-                        
-if __name__=="__main__":
-    import sys
+        # Fix dirname bugaboos 
+        dirname = dirname.replace('.ino/', '/')
+        
+        # Fix filename bugaboos 
+        filename = filename.replace('.ino.ino', '.ino')
 
+        # Fix numering hassle.         
+        while re.search('-(\d+)\.\w+$', filename) is not None : 
+            filename = re.sub('-\d+\.', '.', filename)
+
+        if 'files' not in subs[user] : 
+            subs[user]['files'] = {}
+
+        subs[user]['files'][filename] = {}            
+        subs[user]['files'][filename]['origname'] = origname
+        subs[user]['files'][filename]['dirname'] = dirname
+        subs[user]['files'][filename]['data'] = data         
+
+    return subs
+
+def main() :
     installdir = '/home/maximus/Arduino/ArduinoGrader'
     os.environ['PYTHONPATH'] = installdir
 
@@ -95,88 +102,65 @@ if __name__=="__main__":
 
     test = None
     try :
-        test = importlib.import_module("tests." + sys.argv[1])
-    
+        test = importlib.import_module("tests." + sys.argv[1])    
     except Exception as e :
         print ("Failed to import test.\n", e)
         exit (2)
 
-    
-    temp = tempfile.TemporaryDirectory()
-    tempdir = temp.name
-    #tempdir = './canvas-temp'
-    rdir = sys.argv[2]
-
-    suites = {}
-    userfiles = {}
-
-    for i, d, v in zipwalk(None, rdir):
-        base = v[0]
-        parts = base.split('_')
-        user = parts.pop(0)
-        late = False
-
-        if userfilter is not None and user != userfilter :
-            continue
-
-        if parts[0] == 'late' :
-            late = True
-            parts.pop(0)
-        
-        while re.match('\d+', parts[0]) is not None :
-            parts.pop(0)
-
-        if len(v) > 1 : 
-            zippath = i.filename.split('/')
-            filename = zippath[-1]
-            if filename == "" :
-                continue;
-            
-        else:
-            filename = '_'.join(parts)
-
-        # Fix filename bugaboos 
-        filename = filename.replace('.ino.ino', '.ino')
-        
-        # Fix numering hassle.         
-        while re.search('-(\d+)\.\w+$', filename) is not None : 
-            filename = re.sub('-\d+\.', '.', filename)
-
-        if not os.path.isdir(os.path.join(tempdir, user)) :
-            os.makedirs(os.path.join(tempdir, user))
-
-        extract = os.path.join(tempdir, user, filename)
-        f = open (extract, 'wb') 
-        f.write(d)
-        f.close()
-
-        print ("Matching file:", filename)
-        for pattern in test.files :
-            m = re.search(pattern[0], filename)
-            if m is not None :
-                context = {}
-                context['tempdir'] = os.path.join(tempdir, user, 'temp')
-                context['program'] = extract
-                context['user'] = user
-
-                if user not in suites :
-                    suites[user] = []
-                
-                suite = GraderSuite(context)
-                suites[user].append(suite)
-                for tc in ['.*\.ino', Comments, ArduinoBuilder] + pattern[1:] :
-                    for name in unittest.defaultTestLoader.getTestCaseNames(tc) :
-                        suite.addTest(tc(name, context))
-
+    subs = submissions(sys.argv[2])
     gradedir = sys.argv[1] + '-grades'
     if not os.path.isdir(gradedir) :
         os.makedirs(gradedir)
-    for user in sorted(suites) : 
-        print ("\n\n ****** Running test for user", user, " ******\n\n")
-        runner(suites[user], os.path.join(gradedir, user + '.zip'))
+
+    with tempfile.TemporaryDirectory(prefix='ArduinoGrader') as workdir :
+        for user in sorted(subs) :
+            if userfilter is not None and user != userfilter :
+                continue
+            graders = []
+            print ("\n\n ****** Running test for user", user, " ******\n\n")
+            if not os.path.isdir(os.path.join(workdir, user)) :
+                os.makedirs(os.path.join(workdir, user))
+            for filename in subs[user]['files'].keys() :
+                dirname = subs[user]['files'][filename]['dirname']
+                origname = subs[user]['files'][filename]['origname']
+                if origname != filename :
+                    print ("Renamed file:", os.path.join(dirname, origname), "->", filename)
+                else:
+                    print ("Found file:", os.path.join(dirname, filename))
+                    
+                if not os.path.isdir(os.path.join(workdir, user, dirname)) :
+                    os.makedirs(os.path.join(workdir, user, dirname))
+
+                extract = os.path.join(workdir, user, dirname, filename)
+                with open (extract, 'wb') as f :
+                    f.write(subs[user]['files'][filename]['data'])
+
+                for pattern in test.files :
+                    m = re.search(pattern[0], filename)
+                    if m is not None :
+                        context = {}
+                        context['tempdir'] = os.path.join(workdir, user, 'temp')
+                        context['program'] = extract
+                        context['user'] = user
+                        if len(pattern) > 2 :
+                            context['extras'] = pattern[2]
+                        else:
+                            context['extras'] = []
+
+                        suite = GraderSuite(context)
+                        graders.append(suite)
+
+                        if 'suite' not in subs[user] :
+                            subs[user]['suite'] = []
+
+                        subs[user]['suite'].append(suite)
+                        for tc in ['.*\.ino', Comments, ArduinoBuilder] + pattern[1:] :
+                            for name in unittest.defaultTestLoader.getTestCaseNames(tc) :
+                                suite.addTest(tc(name, context))
+
+            runner(graders, os.path.join(gradedir, user + '.zip'))
 
     print ("\n\n===== done =====\n\n")
-
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(os.path.join(gradedir, 'histogram.txt'))
@@ -186,3 +170,7 @@ if __name__=="__main__":
     logger.addHandler(fh)
     logger.addHandler(ch)
     histogram(logger)
+
+if __name__=="__main__":
+    main()
+
