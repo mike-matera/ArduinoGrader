@@ -14,6 +14,7 @@ args = parser.parse_args()
 arduino = "/opt/arduino/arduino"
 arduino_wrapper = "/home/maximus/ArduinoGrader2/arduino"
 
+
 def main():
     sketch = pathlib.Path(args.sketch)
     if not sketch.exists():
@@ -46,6 +47,7 @@ def main():
         subprocess.run('tree', cwd=tempdir)
 
         # Build the emulator.
+
 
 if __name__ == '__main__':
     main()
