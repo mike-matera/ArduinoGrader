@@ -6,13 +6,14 @@ import tempfile
 import shutil
 import subprocess
 import os
+import multiprocessing
 
 parser = argparse.ArgumentParser()
 parser.add_argument('sketch', help="A sketch to compile.")
 args = parser.parse_args()
 
 arduino = "/opt/arduino/arduino"
-arduino_wrapper = "/home/maximus/ArduinoGrader2/arduino"
+arduino_wrapper = "/home/maximus/ArduinoGrader/emulator"
 
 
 def main():
@@ -40,14 +41,15 @@ def main():
         subprocess.run(f'{arduino} --verify --preserve-temp-files --pref build.path={tempdir}/build {tempsketch}/{sketch.name}', cwd=tempdir, check=True, shell=True)
 
         # Copy files to build the emulator.
-        emu_dir = tempdir / 'emu'
-        os.mkdir(emu_dir)
+        emu_dir = tempdir / 'emulator'
+        shutil.copytree(arduino_wrapper, emu_dir)
         shutil.copy2(tempdir / 'build' / 'sketch' / (str(sketch.name) + '.cpp'), emu_dir)
-        shutil.copytree(arduino_wrapper, emu_dir / 'arduino')
-        subprocess.run('tree', cwd=tempdir)
 
         # Build the emulator.
-
+        ncpus = multiprocessing.cpu_count()
+        subprocess.run(f'make -j {ncpus}', shell=True, cwd=emu_dir, check=True)
+        subprocess.run('tree', cwd=tempdir)
+        subprocess.run('./test', shell=True, cwd=emu_dir, check=True)
 
 if __name__ == '__main__':
     main()
